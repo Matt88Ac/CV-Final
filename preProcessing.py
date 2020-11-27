@@ -5,7 +5,7 @@ from sklearn.metrics import confusion_matrix
 from sklearn.metrics import accuracy_score
 
 
-class preProcessing:
+class preProcessor:
 
     def __init__(self, image: np.ndarray):
         self.image: np.ndarray = image.copy()
@@ -170,11 +170,10 @@ class DigitsSVM:
 
         return x_test, y_test
 
-
 # svm = DigitsSVM()
 # d1 = svm.digits_dataset[5]
 # pred = svm.predict(d1)
 # print(svm.score)
-#img = cv2.imread('sudoku.jpg')
-#pp = preProcessing(img)
-#pp.plot()
+# img = cv2.imread('sudoku.jpg')
+# pp = prepreProcessor(img)
+# pp.plot()
