@@ -93,10 +93,36 @@ class preProcessing:
         warped = cv2.warpPerspective(imag, M, (maxWidth, maxHeight), borderMode=cv2.BORDER_TRANSPARENT)
         return warped, M
 
+    def plot(self):
+        plt.subplot(2, 2, 1)
+        plt.xticks([])
+        plt.yticks([])
+        plt.title('Original Sudoku Grid')
+        plt.imshow(self.original_area)
+
+        plt.subplot(2, 2, 2)
+        plt.xticks([])
+        plt.yticks([])
+        plt.title('Pre Processed Sudoku Grid')
+        plt.imshow(self.gray_area, cmap='gray')
+
+        plt.show()
+
+
+class SVM:
+
+    def __init__(self):
+        self.svm = cv2.ml.SVM_create()
+        self.svm.setType(cv2.ml.SVM_C_SVC)
+        self.svm.setKernel(cv2.ml.SVM_LINEAR)
+
+        self.digits_dataset = cv2.imread('digitst.jpg', 0)
+        self.digits_dataset = np.array([np.hsplit(row, 9) for
+                                        row in np.vsplit(self.digits_dataset, 40)]).reshape(-1, 2500)
 
 
 
-# img = cv2.imread('sudoku.jpg')
-# pp = preProcessing(img)
-# plt.imshow(pp.original_area, cmap='gray')
-# plt.show()
+
+img = cv2.imread('sudoku.jpg')
+pp = preProcessing(img)
+pp.plot()
