@@ -14,7 +14,7 @@ class preProcessor:
         self.original_area = self.__findArea()
         self.gray_area, self.gray_M = self.__four_point_transform(self.binIm, self.original_area)
         self.original_area, self.original_M = self.__four_point_transform(self.image, self.original_area)
-        self.__improve()
+        #self.__improve()
 
         # self.gray_area: np.ndarray = self.gray_area[10:, :]
         # self.original_area: np.ndarray = self.original_area[10:, :]
@@ -22,7 +22,7 @@ class preProcessor:
     def __runPP(self) -> np.ndarray:
         imag = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
 
-        imag = cv2.GaussianBlur(imag, (9, 9), 0)
+        imag = cv2.GaussianBlur(imag, (5, 5), 0)
         imag = cv2.fastNlMeansDenoising(imag, None)
         imag = cv2.adaptiveThreshold(imag, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
 
