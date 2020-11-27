@@ -14,6 +14,7 @@ class preProcessing:
         self.original_area = self.__findArea()
         self.gray_area, self.gray_M = self.__four_point_transform(self.binIm, self.original_area)
         self.original_area, self.original_M = self.__four_point_transform(self.image, self.original_area)
+        self.__improve()
 
         # self.gray_area: np.ndarray = self.gray_area[10:, :]
         # self.original_area: np.ndarray = self.original_area[10:, :]
@@ -95,14 +96,23 @@ class preProcessing:
         warped = cv2.warpPerspective(imag, M, (maxWidth, maxHeight), borderMode=cv2.BORDER_TRANSPARENT)
         return warped, M
 
+    def __improve(self):
+        my_filter = cv2.getStructuringElement(cv2.MORPH_CROSS, (5, 5)).astype(np.uint8)
+        self.gray_area = cv2.erode(self.gray_area, my_filter)
+        self.gray_area = cv2.dilate(self.gray_area, my_filter)
+        # done "opening"
+        self.gray_area = cv2.dilate(self.gray_area, my_filter)
+        self.gray_area = cv2.erode(self.gray_area, my_filter)
+
     def plot(self):
+        """""
         plt.subplot(2, 2, 1)
         plt.xticks([])
         plt.yticks([])
         plt.title('Original Sudoku Grid')
         plt.imshow(self.original_area)
-
         plt.subplot(2, 2, 2)
+        """""
         plt.xticks([])
         plt.yticks([])
         plt.title('Pre Processed Sudoku Grid')
@@ -164,6 +174,6 @@ class DigitsSVM:
 # d1 = svm.digits_dataset[5]
 # pred = svm.predict(d1)
 # print(svm.score)
-# img = cv2.imread('sudoku.jpg')
-# pp = preProcessing(img)
-# pp.plot()
+img = cv2.imread('sudoku.jpg')
+pp = preProcessing(img)
+pp.plot()
