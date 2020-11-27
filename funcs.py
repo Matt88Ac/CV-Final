@@ -40,21 +40,12 @@ def four_point_transform(image: np.ndarray, pts: np.ndarray):
     image = image.copy()
 
     def order_points(points: np.ndarray):
-        # initialzie a list of coordinates that will be ordered
-        # such that the first entry in the list is the top-left,
-        # the second entry is the top-right, the third is the
-        # bottom-right, and the fourth is the bottom-left
-        rect1 = np.zeros((4, 2), dtype="float32")
+        rect1 = np.zeros((4, 2), dtype=np.float32)
 
-        # the top-left point will have the smallest sum, whereas
-        # the bottom-right point will have the largest sum
         s = pts.sum(axis=1)
         rect1[0] = points[np.argmin(s)]
         rect1[2] = points[np.argmax(s)]
 
-        # now, compute the difference between the points, the
-        # top-right point will have the smallest difference,
-        # whereas the bottom-left will have the largest difference
         diff = np.diff(points, axis=1)
         rect1[1] = points[np.argmin(diff)]
         rect1[3] = points[np.argmax(diff)]
@@ -234,9 +225,9 @@ def solve(arr: np.ndarray):
     return False
 
 
-def predict(image, hog, svm):
-    image = cv2.resize(image, dsize=(50, 50))
-    im = image.reshape(50, 50).astype(np.uint8)
+def predict(image: np.ndarray, hog, svm):
+    im = cv2.resize(image, dsize=(50, 50))
+    im = im.reshape(50, 50).astype(np.uint8)
     im_h = hog.compute(im)
     svm_res = svm.predict(np.array([im_h]))
 
