@@ -18,14 +18,6 @@ def imagePreProcessing(image: np.ndarray) -> np.ndarray:
     return img
 
 
-def runSVM(train, labels):
-    svm = cv2.ml.SVM_create()
-    svm.setType(cv2.ml.SVM_C_SVC)
-    svm.setKernel(cv2.ml.SVM_LINEAR)
-    svm.train(train.astype(np.float32), cv2.ml.ROW_SAMPLE, labels.astype(np.int32))
-    return svm
-
-
 def findArea(image: np.ndarray):
     contours, _ = cv2.findContours(image.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     largestContours = sorted(contours, key=cv2.contourArea, reverse=True)[:1]
@@ -92,6 +84,23 @@ def four_point_transform(image: np.ndarray, pts: np.ndarray):
     return warped, M
 
 
+def runSVM(train, labels):
+    svm = cv2.ml.SVM_create()
+    svm.setType(cv2.ml.SVM_C_SVC)
+    svm.setKernel(cv2.ml.SVM_LINEAR)
+    svm.train(train.astype(np.float32), cv2.ml.ROW_SAMPLE, labels.astype(np.int32))
+    return svm
+
+
+def predict(image: np.ndarray, hog, svm):
+    im = cv2.resize(image, dsize=(50, 50))
+    im = im.reshape(50, 50).astype(np.uint8)
+    im_h = hog.compute(im)
+    svm_res = svm.predict(np.array([im_h]))
+
+    return svm_res
+
+
 def imageToSudokuCells(image: np.ndarray) -> np.ndarray:
     cells = [np.array_split(row, 9, axis=1) for row in np.array_split(image, 9)]
     cells = np.asarray(cells).reshape(81, 1)
@@ -99,38 +108,38 @@ def imageToSudokuCells(image: np.ndarray) -> np.ndarray:
     return cells
 
 
-def extract_digit(image, kernel_size: tuple = (5, 5)):
+def extract_digit(image: np.ndarray, kernel_size: tuple = (5, 5)):
     original = image.copy()
-    image = image.copy()
+    im = image.copy()
 
-    o_h, o_w = image.shape
+    o_h, o_w = im.shape
 
     # shape of dataset item
     r_w = 50
     r_h = 50
 
     if o_h > r_h or o_w > r_w:
-        image = cv2.resize(image, dsize=(r_h - 2, r_w - 2))
-        o_h, o_w = image.shape
+        im = cv2.resize(im, dsize=(r_h - 2, r_w - 2), interpolation=cv2.INTER_CUBIC)
+        o_h, o_w = im.shape
 
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, kernel_size)
 
     for row in range(o_h):
-        if image[row, 0] == 255:
-            cv2.floodFill(image, None, (0, row), 0)
-        if image[row, o_w - 1] == 255:
-            cv2.floodFill(image, None, (o_w - 1, row), 0)
+        if im[row, 0] == 255:
+            cv2.floodFill(im, None, (0, row), 0)
+        if im[row, o_w - 1] == 255:
+            cv2.floodFill(im, None, (o_w - 1, row), 0)
 
     for col in range(o_w):
-        if image[0, col] == 255:
-            cv2.floodFill(image, None, (col, 0), 0)
-        if image[o_h - 1, col] == 255:
-            cv2.floodFill(image, None, (col, o_h - 1), 0)
+        if im[0, col] == 255:
+            cv2.floodFill(im, None, (col, 0), 0)
+        if im[o_h - 1, col] == 255:
+            cv2.floodFill(im, None, (col, o_h - 1), 0)
 
-    image = cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel)
-    image = cv2.morphologyEx(image, cv2.MORPH_CLOSE, kernel)
+    im = cv2.morphologyEx(im, cv2.MORPH_OPEN, kernel)
+    im = cv2.morphologyEx(im, cv2.MORPH_CLOSE, kernel)
 
-    contours, _ = cv2.findContours(image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    contours, _ = cv2.findContours(im, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
     if len(contours) != 0:
         # find the biggest area
@@ -146,11 +155,11 @@ def extract_digit(image, kernel_size: tuple = (5, 5)):
             res[int((r_h - h) / 2):-int((r_h - h) / 2) - (r_h - h) % 2,
             int((r_w - w) / 2):-int((r_w - w) / 2) - (r_w - w) % 2] = original_area
 
-            cv2.rectangle(image, (x, y), (x + w, y + h), (255, 255, 255), 2)
+            cv2.rectangle(im, (x, y), (x + w, y + h), (255, 255, 255), 2)
 
-            return res, image
+            return res, im
 
-    return None, image
+    return None, im
 
 
 def drawOnSodukoCells(cells, digits, original_digits, color=(0, 255, 0)):
@@ -225,15 +234,6 @@ def solve(arr: np.ndarray):
     return False
 
 
-def predict(image: np.ndarray, hog, svm):
-    im = cv2.resize(image, dsize=(50, 50))
-    im = im.reshape(50, 50).astype(np.uint8)
-    im_h = hog.compute(im)
-    svm_res = svm.predict(np.array([im_h]))
-
-    return svm_res
-
-
 def should_try(sudoku: np.ndarray):
     # if has at least 2 digit in each sudoku box (3x3)
     for i in range(3):
@@ -285,3 +285,12 @@ def sudokuCellsToImage(cells, like_image):
         h += cell.shape[0]
 
     return img
+
+
+def reversePerspective(source, M, dest):
+    return cv2.warpPerspective(source.copy(),
+                               M,
+                               (dest.shape[1], dest.shape[0]),
+                               dst=dest.copy(),
+                               borderMode=cv2.BORDER_TRANSPARENT,
+                               flags=cv2.WARP_INVERSE_MAP)

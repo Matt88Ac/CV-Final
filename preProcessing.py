@@ -151,6 +151,8 @@ class DigitsSVM:
     def predict(self, digit_image: np.ndarray) -> int:
         im = cv2.resize(digit_image, dsize=(50, 50), interpolation=cv2.INTER_CUBIC)
         im = im.reshape(50, 50).astype(np.uint8)
+        if im.sum() < 1000:
+            return 0
         im = self.hog.compute(im)
         return self.svm.predict(np.array([im]))[1][0][0]
 
