@@ -27,13 +27,13 @@ def runSVM(train, labels):
 
 
 def findArea(image: np.ndarray):
-    _, contours, _ = cv2.findContours(image.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contours, _ = cv2.findContours(image.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     largestContours = sorted(contours, key=cv2.contourArea, reverse=True)[:1]
 
     epsilon = 0.015 * cv2.arcLength(largestContours[0], True)
     approx = cv2.approxPolyDP(largestContours[0], epsilon, True)
 
-    return contours, approx
+    return approx
 
 
 def four_point_transform(image: np.ndarray, pts: np.ndarray):
@@ -49,8 +49,8 @@ def four_point_transform(image: np.ndarray, pts: np.ndarray):
         # the top-left point will have the smallest sum, whereas
         # the bottom-right point will have the largest sum
         s = pts.sum(axis=1)
-        rect[0] = points[np.argmin(s)]
-        rect[2] = points[np.argmax(s)]
+        rect1[0] = points[np.argmin(s)]
+        rect1[2] = points[np.argmax(s)]
 
         # now, compute the difference between the points, the
         # top-right point will have the smallest difference,
@@ -139,7 +139,7 @@ def extract_digit(image, kernel_size: tuple = (5, 5)):
     image = cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel)
     image = cv2.morphologyEx(image, cv2.MORPH_CLOSE, kernel)
 
-    _, contours, _ = cv2.findContours(image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    contours, _ = cv2.findContours(image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
     if len(contours) != 0:
         # find the biggest area
@@ -190,6 +190,7 @@ def drawDigit(image, digit, color=(0, 255, 0)):
     img = cv2.putText(image.copy(), str(int(digit)), (offsetLeft, offsetTop), font, size, color, 2, cv2.LINE_AA)
     return img
 
+
 def is_safe(array, r, c, num):
     def already_used(n, a):
         return n in a
@@ -201,18 +202,21 @@ def is_safe(array, r, c, num):
     return not already_used(num, array[r]) and not already_used(num, array[:9, c:c + 1]) and not box
 
 
-def solve(arr):
-    def next_cell(a: np.ndarray):
+def solve(arr: np.ndarray):
+    def next_cell(a: np.ndarray) -> tuple:
         if arr[0][0] == 0:
             return 0, 0
         (r, c) = np.unravel_index((a == 0).argmax(), a.shape)
-        if r != 0 or c != 0: return r, c
+        if r != 0 or c != 0:
+            return r, c
+
         return -1, -1
 
-    (row, col) = next_cell(arr)
+    row, col = next_cell(arr)
 
     # solved
-    if row == -1 and col == -1: return True
+    if row == col == -1:
+        return True
 
     for num in range(1, 10):
         if is_safe(arr, row, col, num):
@@ -239,7 +243,7 @@ def predict(image, hog, svm):
     return svm_res
 
 
-def should_try(sudoku):
+def should_try(sudoku: np.ndarray):
     # if has at least 2 digit in each sudoku box (3x3)
     for i in range(3):
         for j in range(3):
