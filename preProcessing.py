@@ -97,7 +97,7 @@ class preProcessing:
         return warped, M
 
     def __improve(self):
-        my_filter = cv2.getStructuringElement(cv2.MORPH_CROSS, (5, 5)).astype(np.uint8)
+        my_filter = cv2.getStructuringElement(cv2.MORPH_CROSS, (3, 3)).astype(np.uint8)
         self.gray_area = cv2.erode(self.gray_area, my_filter)
         self.gray_area = cv2.dilate(self.gray_area, my_filter)
         # done "opening"
@@ -170,10 +170,11 @@ class DigitsSVM:
 
         return x_test, y_test
 
+
 # svm = DigitsSVM()
 # d1 = svm.digits_dataset[5]
 # pred = svm.predict(d1)
 # print(svm.score)
-img = cv2.imread('sudoku.jpg')
-pp = preProcessing(img)
-pp.plot()
+#img = cv2.imread('sudoku.jpg')
+#pp = preProcessing(img)
+#pp.plot()
