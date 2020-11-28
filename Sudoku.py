@@ -180,77 +180,55 @@ class Sudoku:
 
     def __init__(self, grid: np.ndarray):
         self.digits = Digits(grid)
-
         self.solution = self.__solve()
         self.sol_grid = self.__drawSolution()
         self.sol_grid = self.sol_grid[:, 0]
-
         self.sol_grid = self.__cells_to_grid()
 
     def __solve(self) -> np.ndarray:
 
-        def is_safe(array, r, c, num) -> bool:
-            def already_used(n, a):
-                return n in a
+        def findNextCellToFill(grid, i, j):
+            for x in range(i, 9):
+                for y in range(j, 9):
+                    if grid[x][y] == 0:
+                        return x, y
+            for x in range(0, 9):
+                for y in range(0, 9):
+                    if grid[x][y] == 0:
+                        return x, y
 
-            box_r = r - r % 3
-            box_c = c - c % 3
-            box = already_used(num, array[box_r:box_r + 3, box_c:box_c + 3])
+            return -1, -1
 
-            return not already_used(num, array[r]) and not already_used(num, array[:9, c:c + 1]) and not box
-
-        def solve(arr: np.ndarray):
-            def next_cell(a: np.ndarray) -> tuple:
-                if arr[0][0] == 0:
-                    return 0, 0
-                (r, c) = np.unravel_index((a == 0).argmax(), a.shape)
-                if r != 0 or c != 0:
-                    return r, c
-
-                return -1, -1
-
-            row, col = next_cell(arr)
-
-            # solved
-            if row == col == -1:
-                return True
-
-            for num in range(1, 10):
-                if is_safe(arr, row, col, num):
-                    arr[row][col] = num
-
-                    if solve(arr):
-                        return True
-
-                    arr[row][col] = 0
-
-            # no solution
+        def isValid(grid, i, j, e):
+            rowOk = all([e != grid[i][x] for x in range(9)])
+            if rowOk:
+                columnOk = all([e != grid[x][j] for x in range(9)])
+                if columnOk:
+                    # finding the top left x,y co-ordinates of the section containing the i,j cell
+                    secTopX, secTopY = 3 * (i // 3), 3 * (j // 3)  # floored quotient should be used here.
+                    for x in range(secTopX, secTopX + 3):
+                        for y in range(secTopY, secTopY + 3):
+                            if grid[x][y] == e:
+                                return False
+                    return True
             return False
 
-        def should_try(sudoku: np.ndarray) -> bool:
-            for i in range(3):
-                for j in range(3):
-                    box = sudoku[i * 3:i * 3 + 3, j * 3:j * 3 + 3]
-                    if len(box[box != 0]) < 2:
-                        return False
+        def solveSudoku(grid, i=0, j=0):
+            i, j = findNextCellToFill(grid, i, j)
+            if i == -1:
+                return True
+            for e in range(1, 10):
+                if isValid(grid, i, j, e):
+                    grid[i][j] = e
+                    if solveSudoku(grid, i, j):
+                        return True
+                    # Undo the current cell for backtracking
+                    grid[i][j] = 0
+            return False
 
-            for i in range(9):
-                for j in range(9):
-                    arr = sudoku.copy()
-                    num = arr[i, j]
-                    if num != 0:
-                        arr[i, j] = 0
-                        if not is_safe(arr, i, j, num):
-                            return False
-            return True
-
-        solved = self.digits.matrix.copy()
-
-        if should_try(solved):
-            if solve(solved):
-                return solved
-
-        return None
+        new_grid = self.digits.matrix.copy()
+        solveSudoku(new_grid)
+        return new_grid
 
     def __drawSolution(self) -> np.ndarray:
         if type(self.solution) != np.ndarray:
@@ -318,5 +296,7 @@ class Sudoku:
             if not ret:
                 break
 
-# image = cv2.imread('sudoku.jpg')
-# sud = Sudoku(image)
+
+image = cv2.imread('3-20.png')
+sud = Sudoku(image)
+sud.plot()

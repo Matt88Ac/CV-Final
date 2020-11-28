@@ -174,11 +174,3 @@ class DigitsSVM:
         self.svm.train(x_train, cv2.ml.ROW_SAMPLE, y_train.astype(np.int32))
 
         return x_test, y_test
-
-# svm = DigitsSVM()
-# d1 = svm.digits_dataset[5]
-# pred = svm.predict(d1)
-# print(svm.score)
-# img = cv2.imread('sudoku.jpg')
-# pp = prepreProcessor(img)
-# pp.plot()
