@@ -295,14 +295,28 @@ class Sudoku:
 
         return img
 
-    def plot(self):
+    def plot(self, with_original_res=True):
         plt.title('Final Solution For the Given Sudoku')
-        plt.imshow(self.sol_grid)
+        if with_original_res:
+            plt.imshow(cv2.warpPerspective(self.sol_grid, self.digits.cells.prep.original_M,
+                                           (self.digits.cells.prep.image.shape[1],
+                                            self.digits.cells.prep.image.shape[0]),
+                                           dst=self.digits.cells.prep.image, borderMode=cv2.BORDER_TRANSPARENT,
+                                           flags=cv2.WARP_INVERSE_MAP))
+        else:
+            plt.imshow(self.sol_grid)
         plt.xticks([])
         plt.yticks([])
         plt.show()
 
+    def createVideo(self):
+        cap = cv2.VideoCapture(0)
+        fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
 
-image = cv2.imread('sudoku.jpg')
-sud = Sudoku(image)
-sud.plot()
+        while cap.isOpened():
+            ret, frame = cap.read()
+            if not ret:
+                break
+
+# image = cv2.imread('sudoku.jpg')
+# sud = Sudoku(image)
