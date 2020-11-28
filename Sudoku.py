@@ -90,8 +90,7 @@ class Cells:
         for i in range(self.cells.shape[0]):
             plt.subplot(9, 9, k)
             k += 1
-            # plt.imshow(self.cells[i], cmap='gray')
-            plt.imshow(self.raw[i][0], cmap='gray')
+            plt.imshow(self.cells[i], cmap='gray')
             plt.xticks([]), plt.yticks([])
 
         plt.show()
@@ -115,7 +114,7 @@ class Digits:
                 self.digits[i] = self.cells[i].copy()
                 self.images[i] = self.cells[i].copy()
 
-        self.matrix = np.array([self.svm.predict(d) for d in self.digits]).reshape(9, 9)
+        self.matrix: np.ndarray = np.array([self.svm.predict(d) for d in self.digits]).reshape(9, 9)
 
     def __extract_digit(self, which, kernel_size: tuple = (5, 5)):
         im = self.cells.raw[which][0]  # self.cells[which].copy().astype(np.uint8)
@@ -183,8 +182,12 @@ class Sudoku:
         self.digits = Digits(grid)
 
         self.solution = self.__solve()
+        self.sol_grid = self.__drawSolution()
+        self.sol_grid = self.sol_grid[:, 0]
 
-    def __solve(self):
+        self.sol_grid = self.__cells_to_grid()
+
+    def __solve(self) -> np.ndarray:
 
         def is_safe(array, r, c, num) -> bool:
             def already_used(n, a):
@@ -231,8 +234,6 @@ class Sudoku:
                     if len(box[box != 0]) < 2:
                         return False
 
-            # if current sudoku is valid
-            # check if each cell value (from SVM) is valid (no duplicate, etc..)
             for i in range(9):
                 for j in range(9):
                     arr = sudoku.copy()
@@ -251,7 +252,57 @@ class Sudoku:
 
         return None
 
+    def __drawSolution(self) -> np.ndarray:
+        if type(self.solution) != np.ndarray:
+            return np.zeros_like(self.digits.cells.original)
+
+        to_draw: np.ndarray = self.digits.cells.original.copy()
+        mat = self.digits.matrix.flatten()
+        sol = self.solution.flatten()
+
+        def drawDigit(cell: np.ndarray, digit: int, color: tuple):
+            h, w, _ = cell.shape
+
+            size = w / h
+            offsetTop = int(h * 0.75 * size)
+            offsetLeft = int(w * 0.25 * size)
+
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            return cv2.putText(cell.copy(), str(int(digit)), (offsetLeft, offsetTop), font, size, color, 2, cv2.LINE_AA)
+
+        for i in range(81):
+            if self.digits.matrix.flatten()[i] == 0:
+                to_draw[i][0] = drawDigit(to_draw[i][0], sol[i], (0, 0, 0))
+
+        return to_draw
+
+    def __cells_to_grid(self):
+        img = np.zeros_like(self.digits.cells.prep.original_area)
+
+        h = 0
+        w = 0
+        cell = self.sol_grid[0]
+        for i in range(9):
+            for j in range(9):
+                index = i * 9 + j
+                cell = self.sol_grid[index]
+
+                img[h: h + cell.shape[0], w: w + cell.shape[1]] = cell
+                w += cell.shape[1]
+
+            w = 0
+            h += cell.shape[0]
+
+        return img
+
+    def plot(self):
+        plt.title('Final Solution For the Given Sudoku')
+        plt.imshow(self.sol_grid)
+        plt.xticks([])
+        plt.yticks([])
+        plt.show()
+
 
 image = cv2.imread('sudoku.jpg')
 sud = Sudoku(image)
-print(sud.solution)
+sud.plot()
