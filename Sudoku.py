@@ -66,7 +66,7 @@ class Cells:
         for i in range(81):
             self[i] = cv2.erode(self[i], my_filter)
             self[i] = cv2.dilate(self[i], my_filter)
-        # done "opening"
+            # done "opening"
             self[i] = cv2.dilate(self[i], my_filter)
             self[i] = cv2.erode(self[i], my_filter)
 
@@ -91,10 +91,18 @@ class Digits:
 
     def __init__(self, sudoku: np.ndarray):
         self.cells = Cells(sudoku)
-        self.digits = np.zeros((2, 2))
         self.digits = np.array([self.__extract_digit(i) for i in range(len(self.cells))])
         self.images = self.digits[:, 1]
         self.digits = self.digits[:, 0]
+
+        self.svm = DigitsSVM()
+
+        pred_cells = [self.svm.predict(c) for c in self.cells]
+
+        for i in range(len(pred_cells)):
+            if pred_cells[i] != 1 and self.digits[i] is None:
+                self.digits[i] = self.cells[i].copy()
+                self.images[i] = self.cells[i].copy()
 
     def __extract_digit(self, which, kernel_size: tuple = (5, 5)):
         im = self.cells[which].copy().astype(np.uint8)
@@ -155,3 +163,6 @@ class Digits:
 
         plt.show()
 
+image = cv2.imread('sudoku.jpg')
+digs = Digits(image)
+digs.plot()
