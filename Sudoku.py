@@ -274,18 +274,25 @@ class Sudoku:
         return img
 
     def plot(self, with_original_res=True):
-        plt.title('Final Solution For the Given Sudoku')
+        fig, ax = plt.subplots(1, 2, figsize=(16, 16))
+        ax[0].set_xticks([])
+        ax[0].set_yticks([])
+        ax[0].set_title('Original Sudoku Grid')
+        ax[0].imshow(self.digits.cells.prep.image)
+        ax[1].set_xticks([])
+        ax[1].set_yticks([])
+        ax[1].set_title('Final Solution for the given Sudoku grid')
         if with_original_res:
-            plt.imshow(cv2.warpPerspective(self.sol_grid, self.digits.cells.prep.original_M,
+            ax[1].imshow(cv2.warpPerspective(self.sol_grid, self.digits.cells.prep.original_M,
                                            (self.digits.cells.prep.image.shape[1],
                                             self.digits.cells.prep.image.shape[0]),
                                            dst=self.digits.cells.prep.image, borderMode=cv2.BORDER_TRANSPARENT,
                                            flags=cv2.WARP_INVERSE_MAP))
         else:
-            plt.imshow(self.sol_grid)
-        plt.xticks([])
-        plt.yticks([])
+            ax[1].imshow(self.sol_grid)
+
         plt.show()
+
 
     def createVideo(self):
         cap = cv2.VideoCapture(0)
@@ -297,6 +304,6 @@ class Sudoku:
                 break
 
 
-image = cv2.imread('3-20.png')
-sud = Sudoku(image)
-sud.plot()
+# image = cv2.imread('data/daily_sudoku_20201128.png')
+# sud = Sudoku(image)
+# sud.plot()
