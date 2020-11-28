@@ -19,7 +19,7 @@ class Cells:
         close = plotLines(cv2.cvtColor(self.prep.gray_area, cv2.COLOR_GRAY2BGR), lines)
 
         gray = cv2.cvtColor(close, cv2.COLOR_BGR2GRAY)
-        blur = cv2.medianBlur(gray, 5)
+        blur = cv2.medianBlur(gray, 3)
         sharpen_kernel = np.array([[-1, -1, -1], [-1, 9, -1], [-1, -1, -1]])
         sharpen = cv2.filter2D(blur, -1, sharpen_kernel)
 
@@ -48,6 +48,7 @@ class Cells:
                 yy.append(x)
                 i += 1
 
+        # taking care of positions, as they are in the original image
         self.cells = self.cells[np.argsort(xx)]
         self.cells = self.cells.reshape((9, 9, 50, 50))
         yy = np.array(yy)
@@ -62,13 +63,8 @@ class Cells:
         return self.cells[item]
 
     def __improve(self):
-        my_filter = cv2.getStructuringElement(cv2.MORPH_CROSS, (3, 3)).astype(np.uint8)
         for i in range(81):
-            self[i] = cv2.erode(self[i], my_filter)
-            self[i] = cv2.dilate(self[i], my_filter)
-            # done "opening"
-            self[i] = cv2.dilate(self[i], my_filter)
-            self[i] = cv2.erode(self[i], my_filter)
+            self.cells[i, :3] = 0
 
     def __setitem__(self, key, value):
         self.cells[key] = value
@@ -103,6 +99,10 @@ class Digits:
             if pred_cells[i] != 1 and self.digits[i] is None:
                 self.digits[i] = self.cells[i].copy()
                 self.images[i] = self.cells[i].copy()
+
+        self.matrix = np.array([self.svm.predict(d) for d in self.digits])
+
+        print(self.matrix.reshape(9, 9))
 
     def __extract_digit(self, which, kernel_size: tuple = (5, 5)):
         im = self.cells[which].copy().astype(np.uint8)
@@ -162,6 +162,7 @@ class Digits:
             plt.xticks([]), plt.yticks([])
 
         plt.show()
+
 
 image = cv2.imread('sudoku.jpg')
 digs = Digits(image)
