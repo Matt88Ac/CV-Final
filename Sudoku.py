@@ -250,7 +250,7 @@ class Sudoku:
 
         for i in range(81):
             if self.digits.matrix.flatten()[i] == 0:
-                to_draw[i][0] = drawDigit(to_draw[i][0], sol[i], (0, 0, 0))
+                to_draw[i][0] = drawDigit(to_draw[i][0], sol[i], (170, 50, 150))
 
         return to_draw
 
@@ -293,7 +293,7 @@ class Sudoku:
 
         plt.show()
 
-
+    """"
     def createVideo(self):
         cap = cv2.VideoCapture(0)
         fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
@@ -302,8 +302,9 @@ class Sudoku:
             ret, frame = cap.read()
             if not ret:
                 break
+    """
 
 
-# image = cv2.imread('data/daily_sudoku_20201128.png')
+# image = cv2.imread('data/sudoku.jpg')
 # sud = Sudoku(image)
 # sud.plot()
