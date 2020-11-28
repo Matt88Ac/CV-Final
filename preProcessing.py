@@ -149,6 +149,8 @@ class DigitsSVM:
         self.con_mat = confusion_matrix(nbins[1], ytest)
 
     def predict(self, digit_image: np.ndarray) -> int:
+        if digit_image.all() is None:
+            return 0
         im = cv2.resize(digit_image, dsize=(50, 50), interpolation=cv2.INTER_CUBIC)
         im = im.reshape(50, 50).astype(np.uint8)
         if im.sum() < 1000:
