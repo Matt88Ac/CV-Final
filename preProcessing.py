@@ -11,13 +11,10 @@ class preProcessor:
         self.image: np.ndarray = image.copy()
 
         self.binIm = self.__runPP()
-        self.original_area = self.__findArea()
+        self.original_area = self.findArea()
         self.gray_area, self.gray_M = self.__four_point_transform(self.binIm, self.original_area)
         self.original_area, self.original_M = self.__four_point_transform(self.image, self.original_area)
-        #self.__improve()
-
-        # self.gray_area: np.ndarray = self.gray_area[10:, :]
-        # self.original_area: np.ndarray = self.original_area[10:, :]
+        # self.__improve()
 
     def __runPP(self) -> np.ndarray:
         imag = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
@@ -34,7 +31,7 @@ class preProcessor:
 
         return imag
 
-    def __findArea(self) -> np.ndarray:
+    def findArea(self) -> np.ndarray:
         contours, _ = cv2.findContours(self.binIm.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         largestContours = sorted(contours, key=cv2.contourArea, reverse=True)[:1]
 
@@ -105,14 +102,7 @@ class preProcessor:
         self.gray_area = cv2.erode(self.gray_area, my_filter)
 
     def plot(self):
-        """""
-        plt.subplot(2, 2, 1)
-        plt.xticks([])
-        plt.yticks([])
-        plt.title('Original Sudoku Grid')
-        plt.imshow(self.original_area)
-        plt.subplot(2, 2, 2)
-        """""
+
         plt.xticks([])
         plt.yticks([])
         plt.title('Pre Processed Sudoku Grid')
