@@ -1,13 +1,17 @@
 import numpy as np
 import cv2
 from matplotlib import pyplot as plt
+from matplotlib.image import AxesImage
 from preProcessing import DigitsSVM, preProcessor
+import os
+from datetime import datetime
 
 
 class Cells:
 
     def __init__(self, sudoku: np.ndarray):
         self.prep = preProcessor(sudoku)
+
         color = (50, 120, 200)
 
         self.raw = np.array([np.array_split(row, 9, axis=1)
@@ -17,7 +21,7 @@ class Cells:
         self.original = np.array([np.array_split(row, 9, axis=1)
                                   for row in np.array_split(self.prep.original_area, 9)]).reshape(81, 1)
 
-        def CompleteClassifier(img: np.ndarray) -> np.ndarray:
+        def CompleteClassifier(self, img: np.ndarray) -> np.ndarray:
 
             def plotLines(imag: np.ndarray, edges: np.ndarray):
                 for x1, y1, x2, y2 in edges[:, 0, :]:
@@ -26,16 +30,19 @@ class Cells:
 
             lines = cv2.HoughLinesP(img, 1, np.pi / 40, 180, maxLineGap=250, minLineLength=60)
             close = plotLines(cv2.cvtColor(img, cv2.COLOR_GRAY2BGR), lines)
+            self.lines1 = close.copy()
 
             gray = cv2.cvtColor(close, cv2.COLOR_BGR2GRAY)
             blur = cv2.medianBlur(gray, 3)
             sharpen_kernel = np.array([[-1, -1, -1], [-1, 9, -1], [-1, -1, -1]])
             sharpen = cv2.filter2D(blur, -1, sharpen_kernel)
+            self.lines2 = sharpen.copy()
 
             thresh = cv2.threshold(sharpen, 100, 250, cv2.THRESH_BINARY_INV)[1]
             kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
             close = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel, iterations=1)
             close = cv2.morphologyEx(close, cv2.MORPH_CLOSE, kernel, iterations=1)
+            self.lines3 = close.copy()
 
             cnts = cv2.findContours(close, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
             cnts = cnts[0] if len(cnts) == 2 else cnts[1]
@@ -70,7 +77,7 @@ class Cells:
 
             return tempo
 
-        self.cells = CompleteClassifier(self.prep.gray_area)
+        self.cells = CompleteClassifier(self, self.prep.gray_area)
 
     def __getitem__(self, item) -> np.ndarray:
         return self.cells[item]
@@ -85,14 +92,16 @@ class Cells:
     def __len__(self):
         return len(self.cells)
 
-    def plot(self):
+    def plot(self, save: str = None):
         k = 1
         for i in range(self.cells.shape[0]):
             plt.subplot(9, 9, k)
             k += 1
-            plt.imshow(self.cells[i], cmap='gray')
             plt.xticks([]), plt.yticks([])
+            plt.imshow(self.cells[i], cmap='gray')
 
+        if save is not None:
+            plt.savefig(save)
         plt.show()
 
 
@@ -167,12 +176,14 @@ class Digits:
 
         return None, im
 
-    def plot(self):
+    def plot(self, save: str = None):
         for i in range(len(self.cells)):
             plt.subplot(9, 9, i + 1)
-            plt.imshow(self.images[i], cmap='gray')
             plt.xticks([]), plt.yticks([])
+            plt.imshow(self.images[i], cmap='gray')
 
+        if save is not None:
+            plt.savefig(save)
         plt.show()
 
 
@@ -284,27 +295,65 @@ class Sudoku:
         ax[1].set_title('Final Solution for the given Sudoku grid')
         if with_original_res:
             ax[1].imshow(cv2.warpPerspective(self.sol_grid, self.digits.cells.prep.original_M,
-                                           (self.digits.cells.prep.image.shape[1],
-                                            self.digits.cells.prep.image.shape[0]),
-                                           dst=self.digits.cells.prep.image, borderMode=cv2.BORDER_TRANSPARENT,
-                                           flags=cv2.WARP_INVERSE_MAP))
+                                             (self.digits.cells.prep.image.shape[1],
+                                              self.digits.cells.prep.image.shape[0]),
+                                             dst=self.digits.cells.prep.image, borderMode=cv2.BORDER_TRANSPARENT,
+                                             flags=cv2.WARP_INVERSE_MAP))
         else:
             ax[1].imshow(self.sol_grid)
 
         plt.show()
-
-    """"
-    def createVideo(self):
-        cap = cv2.VideoCapture(0)
-        fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
-
-        while cap.isOpened():
-            ret, frame = cap.read()
-            if not ret:
-                break
-    """
+        return ax[1]
 
 
-# image = cv2.imread('data/sudoku.jpg')
+def createVideo(sudoku: np.ndarray):
+    fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')  # note the lower case
+
+    curdir = os.getcwd().replace(os.getcwd()[2], '/') + '/Maps'
+    if not os.path.exists(curdir):
+        os.makedirs(curdir)
+
+    sol = Sudoku(sudoku.copy())
+    sol.digits.cells.plot(save=curdir + '/f9.jpg')
+    sol.digits.plot(save=curdir + '/f10.jpg')
+
+    f1 = sol.digits.cells.prep.image
+    f2 = sol.digits.cells.prep.binIm
+    f3 = sol.digits.cells.prep.findArea()
+    f3 = cv2.drawContours(f1.copy(), [f3], -1, (255, 255, 0), 3)
+    f4 = sol.digits.cells.prep.original_area
+    f5 = sol.digits.cells.prep.gray_area
+    f6 = sol.digits.cells.lines1
+    f7 = sol.digits.cells.lines2
+    f8 = sol.digits.cells.lines3
+    f11 = sol.sol_grid
+    f12 = cv2.warpPerspective(sol.sol_grid.copy(), sol.digits.cells.prep.original_M,
+                              (sol.digits.cells.prep.image.shape[1],
+                               sol.digits.cells.prep.image.shape[0]),
+                              dst=sol.digits.cells.prep.image.copy(), borderMode=cv2.BORDER_TRANSPARENT,
+                              flags=cv2.WARP_INVERSE_MAP)
+
+    F = [f1, f2, f3, f4, f5, f6, f7, f8, f11, f12]
+    inds = list(range(1, 9))
+    inds.extend([11, 12])
+
+    h, w, l = sudoku.shape
+    out = cv2.VideoWriter('outpy.avi', cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 1, (w, h))
+
+    for i, j in enumerate(inds):
+        cv2.imwrite('Maps/f{}.jpg'.format(j), F[i])
+
+    F = None
+    inds = None
+    
+    for i in range(1, 13):
+        temp = cv2.imread('Maps/f{}.jpg'.format(i))
+        temp = cv2.resize(temp, dsize=(w, h), interpolation=cv2.INTER_CUBIC)
+        out.write(temp.copy())
+
+    out.release()
+
+
+image = cv2.imread('data/photo_2020-12-04_17-38-53.jpg')
+createVideo(image)
 # sud = Sudoku(image)
-# sud.plot()
