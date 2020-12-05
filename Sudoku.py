@@ -102,6 +102,8 @@ class Cells:
 
         if save is not None:
             plt.savefig(save)
+            plt.clf()
+            return
         plt.show()
 
 
@@ -184,6 +186,8 @@ class Digits:
 
         if save is not None:
             plt.savefig(save)
+            plt.clf()
+            return
         plt.show()
 
 
@@ -314,6 +318,18 @@ def createVideo(sudoku: np.ndarray):
         os.makedirs(curdir)
 
     sol = Sudoku(sudoku.copy())
+    data = sol.digits.matrix
+    color = data > 0
+    color = color.astype(str)
+    color[color == 'True'] = 'gold'
+    color[color == 'False'] = 'white'
+    fig, ax = plt.subplots(1, 1)
+    ax.axis('tight')
+    ax.axis('off')
+    ax.set_title('via SVM model')
+    ax.table(cellText=sol.digits.matrix.astype(int), loc="center", cellColours=color, cellLoc='center', fontsize=3)
+    plt.savefig(curdir+'/f11.jpg')
+    plt.clf()
     sol.digits.cells.plot(save=curdir + '/f9.jpg')
     sol.digits.plot(save=curdir + '/f10.jpg')
 
@@ -335,7 +351,7 @@ def createVideo(sudoku: np.ndarray):
 
     F = [f1, f2, f3, f4, f5, f6, f7, f8, f11, f12]
     inds = list(range(1, 9))
-    inds.extend([11, 12])
+    inds.extend([12, 13])
 
     h, w, l = sudoku.shape
     out = cv2.VideoWriter('outpy.avi', cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 1, (w, h))
@@ -345,8 +361,8 @@ def createVideo(sudoku: np.ndarray):
 
     F = None
     inds = None
-    
-    for i in range(1, 13):
+
+    for i in range(1, 14):
         temp = cv2.imread('Maps/f{}.jpg'.format(i))
         temp = cv2.resize(temp, dsize=(w, h), interpolation=cv2.INTER_CUBIC)
         out.write(temp.copy())
