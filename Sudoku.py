@@ -353,7 +353,7 @@ def createVideo(sudoku: np.ndarray):
     inds = list(range(1, 9))
     inds.extend([12, 13])
 
-    h, w, l = sudoku.shape
+    h, w, _ = sudoku.shape
     out = cv2.VideoWriter('sudoku_vid.avi', cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 1, (w, h))
 
     for i, j in enumerate(inds):
