@@ -373,5 +373,3 @@ def createVideo(sudoku: np.ndarray):
 
 image = cv2.imread('data/photo_2020-12-04_17-38-53.jpg')
 createVideo(image)
-sud = Sudoku(image)
-sud.plot()
