@@ -77,7 +77,11 @@ class Cells:
 
             return tempo
 
-        self.cells = CompleteClassifier(self, self.prep.gray_area)
+        try:
+            self.cells = CompleteClassifier(self, self.prep.gray_area)
+
+        except ValueError:
+            self.cells = np.zeros((81, 50, 50))
 
     def __getitem__(self, item) -> np.ndarray:
         return self.cells[item]
@@ -94,17 +98,32 @@ class Cells:
 
     def plot(self, save: str = None):
         k = 1
-        for i in range(self.cells.shape[0]):
-            plt.subplot(9, 9, k)
-            k += 1
-            plt.xticks([]), plt.yticks([])
-            plt.imshow(self.cells[i], cmap='gray')
+        if self.cells.sum() > 0:
+            for i in range(self.cells.shape[0]):
+                plt.subplot(9, 9, k)
+                k += 1
+                plt.xticks([]), plt.yticks([])
+                plt.imshow(self.cells[i], cmap='gray')
 
-        if save is not None:
-            plt.savefig(save)
-            plt.clf()
-            return
-        plt.show()
+            if save is not None:
+                plt.savefig(save)
+                plt.clf()
+                return
+            plt.show()
+
+        else:
+            for i in range(self.cells.shape[0]):
+                plt.subplot(9, 9, k)
+                k += 1
+                plt.xticks([]), plt.yticks([])
+                plt.imshow(self.raw[i][0], cmap='gray')
+
+            if save is not None:
+                plt.savefig(save)
+                plt.clf()
+                return
+            plt.show()
+
 
 
 class Digits:
@@ -368,5 +387,5 @@ def createVideo(sudoku: np.ndarray):
     out.release()
 
 
-image = cv2.imread('data/photo_2020-12-04_17-38-53.jpg')
+image = cv2.imread('data/photo_2020-12-04_17-35-44.jpg')
 createVideo(image)
