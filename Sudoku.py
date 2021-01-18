@@ -354,7 +354,7 @@ def createVideo(sudoku: np.ndarray):
     inds.extend([12, 13])
 
     h, w, l = sudoku.shape
-    out = cv2.VideoWriter('outpy.avi', cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 1, (w, h))
+    out = cv2.VideoWriter('sudoku_vid.avi', cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 1, (w, h))
 
     for i, j in enumerate(inds):
         cv2.imwrite('Maps/f{}.jpg'.format(j), F[i])
@@ -366,10 +366,12 @@ def createVideo(sudoku: np.ndarray):
         temp = cv2.imread('Maps/f{}.jpg'.format(i))
         temp = cv2.resize(temp, dsize=(w, h), interpolation=cv2.INTER_CUBIC)
         out.write(temp.copy())
+        os.remove('Maps/f{}.jpg'.format(i))
 
     out.release()
 
 
 image = cv2.imread('data/photo_2020-12-04_17-38-53.jpg')
 createVideo(image)
-# sud = Sudoku(image)
+sud = Sudoku(image)
+sud.plot()
