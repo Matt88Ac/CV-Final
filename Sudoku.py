@@ -151,9 +151,6 @@ class Digits:
         im = cv2.morphologyEx(im, cv2.MORPH_OPEN, kernel)
         im = cv2.morphologyEx(im, cv2.MORPH_CLOSE, kernel)
 
-        # plt.imshow(im, cmap='gray')
-        # plt.show()
-
         contours, _ = cv2.findContours(im, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
         if len(contours) != 0:
