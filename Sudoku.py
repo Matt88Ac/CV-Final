@@ -385,5 +385,5 @@ def createVideo(sudoku: np.ndarray):
     out.release()
 
 
-image = cv2.imread('data/photo_2020-12-04_17-38-53.jpg')
+image = cv2.imread('data/photo_2021-01-18_22-14-37.jpg')
 createVideo(image)
