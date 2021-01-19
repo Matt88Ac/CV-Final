@@ -170,3 +170,67 @@ class DigitsSVM:
         self.svm.train(x_train, cv2.ml.ROW_SAMPLE, y_train.astype(np.int32))
 
         return x_test, y_test
+
+
+class KeyModel:
+    def __init__(self):
+        self.sift: cv2.SIFT = cv2.SIFT_create()
+        self.bf = cv2.BFMatcher()
+
+        self.digits_dataset = cv2.imread('digitst.jpg', 0)
+        self.digits_dataset: np.ndarray = np.array([np.hsplit(row, 9) for
+                                                    row in np.vsplit(self.digits_dataset, 40)]).reshape(-1, 2500)
+
+        self.digits_dataset: np.ndarray = self.digits_dataset.reshape((360, 50, 50))
+        self.labels = np.tile(np.arange(1, 10), int(len(self.digits_dataset) / 9))
+
+        self.thr = 5
+
+        self.keyPoints = []
+        self.desc = []
+
+        self.__train()
+
+    def __train(self):
+        for digit in self.digits_dataset:
+            kpts1, des1 = self.sift.detectAndCompute(digit, None)
+            self.desc.append(des1)
+            self.keyPoints.append(kpts1)
+
+    def predict(self, new_digit: np.ndarray) -> int:
+        if type(new_digit) != np.ndarray:
+            return 0
+        temp = cv2.resize(new_digit.astype(np.uint8), (50, 50), interpolation=cv2.INTER_CUBIC)
+        kPts, desc = self.sift.detectAndCompute(temp, None)
+        confidence = []
+        if type(desc) != np.ndarray:
+            return 0
+
+        def Match(d1: np.ndarray, d2: np.ndarray) -> int:
+            goods = np.array([])
+            if type(d2) != np.ndarray:
+                return 0
+            matches = np.array(self.bf.knnMatch(d1, d2, k=2))
+            if len(matches) < 10:
+                return 0
+
+            for m in matches:
+                if len(m) == 1:
+                    continue
+                m, n = m
+                if m.distance < self.thr * n.distance:
+                    goods = np.append(goods, m)
+            return len(goods)
+
+        for i, digit_desc in enumerate(self.desc):
+            confidence.append((Match(desc, digit_desc), self.labels[i]))
+
+        confidence = np.array(confidence)
+        if not np.sum(confidence[:, 0] >= 10):
+            return 0
+        print(confidence[confidence[:, 0].argsort()][::-1][0])
+        return confidence[confidence[:, 0].argsort()][0][1]
+
+
+model = KeyModel()
+#

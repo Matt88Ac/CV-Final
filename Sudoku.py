@@ -2,7 +2,7 @@ import numpy as np
 import cv2
 from matplotlib import pyplot as plt
 from matplotlib.image import AxesImage
-from preProcessing import DigitsSVM, preProcessor
+from preProcessing import DigitsSVM, preProcessor, KeyModel
 import os
 from datetime import datetime
 
@@ -125,7 +125,6 @@ class Cells:
             plt.show()
 
 
-
 class Digits:
 
     def __init__(self, sudoku: np.ndarray):
@@ -135,7 +134,8 @@ class Digits:
         self.images = self.digits[:, 1]
         self.digits = self.digits[:, 0]
 
-        self.svm = DigitsSVM()
+        # self.svm = DigitsSVM()
+        self.svm = KeyModel()
 
         pred_cells = [self.svm.predict(c) for c in self.cells]
 
@@ -344,7 +344,7 @@ def createVideo(sudoku: np.ndarray):
     ax.axis('off')
     ax.set_title('via SVM model')
     ax.table(cellText=sol.digits.matrix.astype(int), loc="center", cellColours=color, cellLoc='center', fontsize=3)
-    plt.savefig(curdir+'/f11.jpg')
+    plt.savefig(curdir + '/f11.jpg')
     plt.clf()
     sol.digits.cells.plot(save=curdir + '/f9.jpg')
     sol.digits.plot(save=curdir + '/f10.jpg')
