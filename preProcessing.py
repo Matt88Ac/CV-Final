@@ -102,7 +102,6 @@ class preProcessor:
         self.gray_area = cv2.erode(self.gray_area, my_filter)
 
     def plot(self):
-
         plt.xticks([])
         plt.yticks([])
         plt.title('Pre Processed Sudoku Grid')
@@ -117,12 +116,19 @@ class DigitsSVM:
         self.svm = cv2.ml.SVM_create()
         self.svm.setType(cv2.ml.SVM_C_SVC)
         self.svm.setKernel(cv2.ml.SVM_LINEAR)
+        self.svm.setTermCriteria((cv2.TERM_CRITERIA_COUNT, 100, 1e-6))
 
-        self.digits_dataset = cv2.imread('digitst.jpg', 0)
-        self.digits_dataset: np.ndarray = np.array([np.hsplit(row, 9) for
-                                                    row in np.vsplit(self.digits_dataset, 40)]).reshape(-1, 2500)
+        s = 50
+        self.s = (s, s)
 
-        self.digits_dataset: np.ndarray = self.digits_dataset.reshape((360, 50, 50))
+        digits_dataset = cv2.imread('digitst.jpg', 0)
+        digits_dataset: np.ndarray = np.array([np.hsplit(row, 9) for
+                                               row in np.vsplit(digits_dataset, 40)]).reshape(-1, 2500)
+
+        digits_dataset: np.ndarray = digits_dataset.reshape((360, 50, 50))
+        self.digits_dataset = np.zeros((360, s, s), dtype=np.uint8)
+        for i in range(360):
+            self.digits_dataset[i] = cv2.resize(digits_dataset[i], self.s, interpolation=cv2.INTER_CUBIC)
 
         winSize = (40, 40)
         blockSize = (20, 20)
@@ -142,8 +148,8 @@ class DigitsSVM:
         if type(digit_image) != np.ndarray:
             return 0
 
-        im = cv2.resize(digit_image, dsize=(50, 50), interpolation=cv2.INTER_CUBIC)
-        im = im.reshape(50, 50).astype(np.uint8)
+        im = cv2.resize(digit_image, dsize=self.s, interpolation=cv2.INTER_CUBIC)
+        im = im.reshape(self.s).astype(np.uint8)
         if im.sum() < 1000:
             return 0
         im = self.hog.compute(im)
