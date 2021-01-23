@@ -14,9 +14,10 @@ class preProcessor:
         self.original_area = self.findArea()
         self.gray_area, self.gray_M = self.__four_point_transform(self.binIm, self.original_area)
         self.original_area, self.original_M = self.__four_point_transform(self.image, self.original_area)
-        # self.__improve()
 
     def __runPP(self) -> np.ndarray:
+        my_filter = cv2.getStructuringElement(cv2.MORPH_CROSS, (3, 3)).astype(np.uint8)
+
         imag = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
 
         imag = cv2.GaussianBlur(imag, (5, 5), 0)
@@ -25,9 +26,10 @@ class preProcessor:
 
         imag = cv2.bitwise_not(imag, imag)
 
-        kernel = np.ones((2, 2), np.uint8)
+        kernel = my_filter.copy()  # np.ones((2, 2), np.uint8)
 
         imag = cv2.dilate(imag, kernel, iterations=1)
+        imag = cv2.erode(imag, kernel, iterations=1)
 
         return imag
 
@@ -92,14 +94,6 @@ class preProcessor:
         M = cv2.getPerspectiveTransform(rect, dst)
         warped = cv2.warpPerspective(imag, M, (maxWidth, maxHeight), borderMode=cv2.BORDER_TRANSPARENT)
         return warped, M
-
-    def __improve(self):
-        my_filter = cv2.getStructuringElement(cv2.MORPH_CROSS, (3, 3)).astype(np.uint8)
-        self.gray_area = cv2.erode(self.gray_area, my_filter)
-        self.gray_area = cv2.dilate(self.gray_area, my_filter)
-        # done "opening"
-        self.gray_area = cv2.dilate(self.gray_area, my_filter)
-        self.gray_area = cv2.erode(self.gray_area, my_filter)
 
     def plot(self):
         plt.xticks([])
@@ -170,5 +164,3 @@ class DigitsSVM:
         self.svm.train(x_train, cv2.ml.ROW_SAMPLE, y_train.astype(np.int32))
 
         return x_test, y_test
-
-
