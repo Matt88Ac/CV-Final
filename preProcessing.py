@@ -1,17 +1,16 @@
 import numpy as np
 import cv2
 from matplotlib import pyplot as plt
-from sklearn.metrics import confusion_matrix, plot_confusion_matrix
+from sklearn.metrics import confusion_matrix
 from sklearn.metrics import accuracy_score
-from sklearn import svm
-from sklearn.model_selection import train_test_split
-import pandas as pd
+from Calibration.Calibration import ChessCalibrator
 
 
 class preProcessor:
 
     def __init__(self, image: np.ndarray):
-        self.image: np.ndarray = image.copy()
+        cal = ChessCalibrator(x=13, y=12)
+        self.image: np.ndarray = cal.undisort(image.copy())
 
         self.binIm = self.__runPP()
         self.original_area = self.findArea()
