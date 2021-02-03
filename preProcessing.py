@@ -1,8 +1,11 @@
 import numpy as np
 import cv2
 from matplotlib import pyplot as plt
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, plot_confusion_matrix
 from sklearn.metrics import accuracy_score
+from sklearn import svm
+from sklearn.model_selection import train_test_split
+import pandas as pd
 
 
 class preProcessor:
@@ -26,12 +29,24 @@ class preProcessor:
 
         imag = cv2.bitwise_not(imag, imag)
 
-        kernel = my_filter.copy()  # np.ones((2, 2), np.uint8)
+        kernel = my_filter.copy()
+        kernel = np.ones((2, 2), np.uint8)
 
         imag = cv2.dilate(imag, kernel, iterations=1)
-        imag = cv2.erode(imag, kernel, iterations=1)
+        # imag = cv2.erode(imag, kernel, iterations=1)
 
         return imag
+
+    def __runPP2(self):
+        kernel = cv2.getStructuringElement(cv2.MORPH_CROSS, (3, 3)).astype(np.uint8)
+        gray = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
+        gray = cv2.GaussianBlur(gray, (3, 3), 0)
+        gray = cv2.fastNlMeansDenoising(gray, None)
+        gray = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C | cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+                                     cv2.THRESH_BINARY, 5, 2)
+        gray = cv2.bitwise_not(gray, gray)
+        gray = cv2.dilate(gray, kernel)
+        return gray
 
     def findArea(self) -> np.ndarray:
         contours, _ = cv2.findContours(self.binIm.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -115,14 +130,19 @@ class DigitsSVM:
         s = 50
         self.s = (s, s)
 
-        digits_dataset = cv2.imread('digitst.jpg', 0)
-        digits_dataset: np.ndarray = np.array([np.hsplit(row, 9) for
-                                               row in np.vsplit(digits_dataset, 40)]).reshape(-1, 2500)
+        def openDataSet():
+            digits_dataset = cv2.imread('digitst.jpg', 0)
+            digits_dataset: np.ndarray = np.array([np.hsplit(row, 9) for
+                                                   row in np.vsplit(digits_dataset, 40)]).reshape(-1, 2500)
 
-        digits_dataset: np.ndarray = digits_dataset.reshape((360, 50, 50))
-        self.digits_dataset = np.zeros((360, s, s), dtype=np.uint8)
-        for i in range(360):
-            self.digits_dataset[i] = cv2.resize(digits_dataset[i], self.s, interpolation=cv2.INTER_CUBIC)
+            digits_dataset: np.ndarray = digits_dataset.reshape((360, 50, 50))
+            digits_dataset_n = np.zeros((360, s, s), dtype=np.uint8)
+            labels = np.tile(np.arange(1, 10), int(len(digits_dataset) / 9))
+
+            for i in range(360):
+                digits_dataset_n[i] = cv2.resize(digits_dataset[i], self.s, interpolation=cv2.INTER_CUBIC)
+
+            return digits_dataset_n, labels
 
         winSize = (40, 40)
         blockSize = (20, 20)
@@ -131,8 +151,8 @@ class DigitsSVM:
         nbins = 9
         self.hog = cv2.HOGDescriptor(winSize, blockSize, blockStride, cellSize, nbins)
 
-        self.labels = np.tile(np.arange(1, 10), int(len(self.digits_dataset) / 9))
-        xtest, ytest = self.__split_and_train(split)
+        dds, lbls = openDataSet()
+        xtest, ytest = self.__split_and_train(dds, lbls, split)
 
         nbins = self.svm.predict(xtest)
         self.score = accuracy_score(nbins[1], ytest)
@@ -143,20 +163,21 @@ class DigitsSVM:
             return 0
 
         im = cv2.resize(digit_image, dsize=self.s, interpolation=cv2.INTER_CUBIC)
-        im = im.reshape(self.s).astype(np.uint8)
-        if im.sum() < 1000:
+        im: np.ndarray = im.reshape(self.s).astype(np.uint8)
+        test = im.astype('float') / 255
+        if test.sum() < 100:
             return 0
         im = self.hog.compute(im)
         return self.svm.predict(np.array([im]))[1][0][0]
 
-    def __split_and_train(self, split) -> tuple:
-        n = len(self.digits_dataset)
+    def __split_and_train(self, dds, labels, split) -> tuple:
+        n = len(dds)
 
-        x_train = self.digits_dataset[: int(n * split)]
-        y_train = self.labels[: int(n * split)]
+        x_train = dds[: int(n * split)]
+        y_train = labels[: int(n * split)]
 
-        x_test = self.digits_dataset[int(n * split):]
-        y_test = self.labels[int(n * split):]
+        x_test = dds[int(n * split):]
+        y_test = labels[int(n * split):]
 
         x_train = np.array([self.hog.compute(x0) for x0 in x_train], dtype=np.float32)
         x_test = np.array([self.hog.compute(x0) for x0 in x_test], dtype=np.float32)
