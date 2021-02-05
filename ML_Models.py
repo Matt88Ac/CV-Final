@@ -81,7 +81,10 @@ class LogisticRegDigits:
 
 class SVM2:
     def __init__(self):
-        if 'SVModel.pkl' in os.
+        if 'SVModel.pkl' in os.listdir():
+            self.model = joblib.load('SVModel.pkl')
+        else:
+
 
 
 
