@@ -32,7 +32,6 @@ class preProcessor:
         kernel = np.ones((2, 2), np.uint8)
 
         imag = cv2.dilate(imag, kernel, iterations=1)
-        # imag = cv2.erode(imag, kernel, iterations=1)
 
         return imag
 
