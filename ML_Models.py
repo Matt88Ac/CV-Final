@@ -11,34 +11,41 @@ from matplotlib import pyplot as plt
 class DigitsSVM:
 
     def __init__(self, split: float = 0.7):
-        self.svm = cv2.ml.SVM_create()
-        self.svm.setType(cv2.ml.SVM_C_SVC)
-        self.svm.setKernel(cv2.ml.SVM_LINEAR)
-        self.svm.setTermCriteria((cv2.TERM_CRITERIA_COUNT, 100, 1e-6))
-
         s = 50
         self.s = (s, s)
-
-        def openDataSet():
-            digits_dataset = cv2.imread('digitst.jpg', 0)
-            digits_dataset: np.ndarray = np.array([np.hsplit(row, 9) for
-                                                   row in np.vsplit(digits_dataset, 40)]).reshape(-1, 2500)
-
-            digits_dataset: np.ndarray = digits_dataset.reshape((360, 50, 50))
-            digits_dataset_n = np.zeros((360, s, s), dtype=np.uint8)
-            labels = np.tile(np.arange(1, 10), int(len(digits_dataset) / 9))
-
-            for i in range(360):
-                digits_dataset_n[i] = cv2.resize(digits_dataset[i], self.s, interpolation=cv2.INTER_CUBIC)
-
-            return digits_dataset_n, labels
-
         winSize = (40, 40)
         blockSize = (20, 20)
         blockStride = (10, 10)
         cellSize = (5, 5)
         nbins = 9
         self.hog = cv2.HOGDescriptor(winSize, blockSize, blockStride, cellSize, nbins)
+        self.svm: cv2.ml_SVM = cv2.ml.SVM_create()
+        if 'SVModel.pkl' in os.listdir():
+            self.svm.load('SVModel.pkl')
+            return
+
+        self.svm.setType(cv2.ml.SVM_C_SVC)
+        self.svm.setKernel(cv2.ml.SVM_LINEAR)
+        self.svm.setTermCriteria((cv2.TERM_CRITERIA_COUNT, 100, 1e-6))
+
+        def openDataSet():
+            digits_dataset_n = []
+            labels = []
+
+            for element in ['Train', 'Test']:
+                for i in range(10):
+                    PATH = 'Dataset/' + element + f'/{i}'
+                    images = os.listdir(PATH)
+                    for image in images:
+                        n_Path = PATH + '/' + image
+                        image = cv2.imread(n_Path, 0)
+                        image = cv2.resize(image, self.s, interpolation=cv2.INTER_CUBIC)
+                        digits_dataset_n.append(image)
+                        labels.append(i)
+            labels = np.array(labels)
+            digits_dataset_n = np.array(digits_dataset_n)
+
+            return digits_dataset_n, labels
 
         dds, lbls = openDataSet()
         xtest, ytest = self.__split_and_train(dds, lbls, split)
@@ -46,6 +53,8 @@ class DigitsSVM:
         nbins = self.svm.predict(xtest)
         self.score = accuracy_score(nbins[1], ytest)
         self.con_mat = confusion_matrix(nbins[1], ytest)
+
+        self.svm.save('SVModel.pkl')
 
     def predict(self, digit_image: np.ndarray) -> int:
         if type(digit_image) != np.ndarray:
@@ -117,6 +126,3 @@ class SVM2:
                 plt.title('Score: {}'.format(accuracy_score(self.model.predict(test_x), test_y)))
                 plot_confusion_matrix(self.model, test_x, test_y, ax=plt.gca())
                 plt.show()
-
-
-SVM2(True)
