@@ -1,8 +1,6 @@
 import numpy as np
 import cv2
 from matplotlib import pyplot as plt
-from sklearn.metrics import confusion_matrix
-from sklearn.metrics import accuracy_score
 from Calibration.Calibration import ChessCalibrator
 
 
