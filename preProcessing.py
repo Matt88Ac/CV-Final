@@ -7,8 +7,7 @@ from Calibration.Calibration import ChessCalibrator
 class preProcessor:
 
     def __init__(self, image: np.ndarray):
-        cal = ChessCalibrator(x=13, y=12)
-        self.image: np.ndarray = cal.undisort(image.copy())
+        self.image: np.ndarray = image.copy()
 
         self.binIm = self.__runPP()
         self.original_area = self.findArea()
