@@ -137,9 +137,7 @@ class Digits:
         self.digits = self.digits[:, 0]
 
         self.svm = DigitsSVM()
-        self.svm = SVM2()
         pred_cells = [self.svm.predict(c) for c in self.cells]
-        print(pred_cells)
 
         for i in range(len(pred_cells)):
             if self.images[i].sum() < self.cells[i].sum() and pred_cells[i] != 1 and self.digits[i] is None:
