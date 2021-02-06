@@ -31,8 +31,8 @@ class Cells:
             lines = cv2.HoughLinesP(img, 1, np.pi / 40, 180, maxLineGap=250, minLineLength=60, lines=edges)
             close = plotLines(cv2.cvtColor(img, cv2.COLOR_GRAY2BGR), lines)
             self.lines1 = close.copy()
-            plt.imshow(close)
-            plt.show()
+            # plt.imshow(close)
+            # plt.show()
 
             gray = cv2.cvtColor(close, cv2.COLOR_BGR2GRAY)
             blur = cv2.medianBlur(gray, 3)
@@ -387,5 +387,6 @@ def createVideo(sudoku: np.ndarray):
     out.release()
 
 
-image = cv2.imread('data/sudoku.jpg')
-createVideo(image)
+# image = cv2.imread('data/sudoku.jpg')
+#createVideo(image)
+# sud = Sudoku(image)
