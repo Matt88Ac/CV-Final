@@ -65,13 +65,13 @@ class DigitsSVM:
         return x_test, y_test
 
 
-class SVM2:
+class RandomForestDigits:
     def __init__(self, plot_confusion_mat=False):
-        if 'SVModel.pkl' in os.listdir():
-            self.model = joblib.load('SVModel.pkl')
+        if 'RFModel.pkl' in os.listdir():
+            self.model = joblib.load('RFModel.pkl')
 
         else:
-            self.model = SVC(kernel='rbf', probability=True)
+            self.model = RandomForestClassifier()
             train_x = []
             train_y = []
             test_x = []
@@ -102,7 +102,7 @@ class SVM2:
                 plt.title('Score: {}'.format(accuracy_score(self.model.predict(test_x), test_y)))
                 plot_confusion_matrix(self.model, test_x, test_y, ax=plt.gca())
                 plt.show()
-        joblib.dump(self.model, 'SVModel.pkl')
+        joblib.dump(self.model, 'RFModel.pkl')
 
     def predict(self, digit: np.ndarray):
         if type(digit) != np.ndarray:
@@ -116,19 +116,3 @@ class SVM2:
         new_im = np.reshape(new_im, (1, len(new_im)))
         pred = self.model.predict(new_im)
         return pred
-
-    def predProb(self, digit: np.ndarray):
-        if type(digit) != np.ndarray:
-            return 0
-
-        if digit.shape != (50, 50):
-            new_im = cv2.resize(digit, (50, 50), interpolation=cv2.INTER_CUBIC)
-        else:
-            new_im = digit.copy()
-        new_im = new_im.astype('float').flatten()
-        new_im = np.reshape(new_im, (1, len(new_im)))
-        pred = self.model.predict_proba(new_im)[0]
-        print(pred)
-        return pred.argmax()
-
-# SVM2(plot_confusion_mat=True)
