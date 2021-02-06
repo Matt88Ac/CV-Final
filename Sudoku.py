@@ -1,11 +1,9 @@
 import numpy as np
 import cv2
 from matplotlib import pyplot as plt
-from matplotlib.image import AxesImage
 from preProcessing import preProcessor
 from ML_Models import DigitsSVM as DSVM
 import os
-from datetime import datetime
 
 
 class Cells:
@@ -29,9 +27,12 @@ class Cells:
                     cv2.line(imag, (x1, y1), (x2, y2), color, 2)
                 return imag
 
-            lines = cv2.HoughLinesP(img, 1, np.pi / 40, 180, maxLineGap=250, minLineLength=60)
+            edges = cv2.Canny(img, 30,  90, 3)
+            lines = cv2.HoughLinesP(img, 1, np.pi / 40, 180, maxLineGap=250, minLineLength=60, lines=edges)
             close = plotLines(cv2.cvtColor(img, cv2.COLOR_GRAY2BGR), lines)
             self.lines1 = close.copy()
+            plt.imshow(close)
+            plt.show()
 
             gray = cv2.cvtColor(close, cv2.COLOR_BGR2GRAY)
             blur = cv2.medianBlur(gray, 3)
@@ -386,5 +387,5 @@ def createVideo(sudoku: np.ndarray):
     out.release()
 
 
-image = cv2.imread('data/photo_2021-01-18_22-14-37.jpg')
+image = cv2.imread('data/sudoku.jpg')
 createVideo(image)
