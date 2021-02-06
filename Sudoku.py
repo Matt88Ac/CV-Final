@@ -2,7 +2,9 @@ import numpy as np
 import cv2
 from matplotlib import pyplot as plt
 from matplotlib.image import AxesImage
-from preProcessing import DigitsSVM, preProcessor
+from preProcessing import preProcessor
+from ML_Models import DigitsSVM
+from preProcessing import DigitsSVM as SVM2
 import os
 from datetime import datetime
 
@@ -136,8 +138,9 @@ class Digits:
         self.digits = self.digits[:, 0]
 
         self.svm = DigitsSVM()
-
+        self.svm = SVM2()
         pred_cells = [self.svm.predict(c) for c in self.cells]
+        print(pred_cells)
 
         for i in range(len(pred_cells)):
             if self.images[i].sum() < self.cells[i].sum() and pred_cells[i] != 1 and self.digits[i] is None:
