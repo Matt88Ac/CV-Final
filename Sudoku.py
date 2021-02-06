@@ -3,8 +3,7 @@ import cv2
 from matplotlib import pyplot as plt
 from matplotlib.image import AxesImage
 from preProcessing import preProcessor
-from ML_Models import DigitsSVM
-from preProcessing import DigitsSVM as SVM2
+from ML_Models import DigitsSVM as DSVM
 import os
 from datetime import datetime
 
@@ -136,7 +135,7 @@ class Digits:
         self.images = self.digits[:, 1]
         self.digits = self.digits[:, 0]
 
-        self.svm = DigitsSVM()
+        self.svm = DSVM()
         pred_cells = [self.svm.predict(c) for c in self.cells]
 
         for i in range(len(pred_cells)):
@@ -387,5 +386,5 @@ def createVideo(sudoku: np.ndarray):
     out.release()
 
 
-image = cv2.imread('data/sudoku.jpg')
+image = cv2.imread('data/photo_2021-01-18_22-14-37.jpg')
 createVideo(image)
