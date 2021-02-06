@@ -127,7 +127,6 @@ class Cells:
             plt.show()
 
 
-
 class Digits:
 
     def __init__(self, sudoku: np.ndarray):
@@ -347,7 +346,7 @@ def createVideo(sudoku: np.ndarray):
     ax.axis('off')
     ax.set_title('via SVM model')
     ax.table(cellText=sol.digits.matrix.astype(int), loc="center", cellColours=color, cellLoc='center', fontsize=3)
-    plt.savefig(curdir+'/f11.jpg')
+    plt.savefig(curdir + '/f11.jpg')
     plt.clf()
     sol.digits.cells.plot(save=curdir + '/f9.jpg')
     sol.digits.plot(save=curdir + '/f10.jpg')
