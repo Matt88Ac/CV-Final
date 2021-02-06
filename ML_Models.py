@@ -71,7 +71,7 @@ class RandomForestDigits:
             self.model = joblib.load('RFModel.pkl')
 
         else:
-            self.model = RandomForestClassifier()
+            self.model = RandomForestClassifier(n_estimators=110, criterion='entropy')
             train_x = []
             train_y = []
             test_x = []
