@@ -520,7 +520,26 @@ def createVideo(sudoku: np.ndarray):
 
 
 def liveSolving():
-    pass
+    model_svm = DSVM()
+    cap = cv2.VideoCapture(0)
+    while True:
+        ret, frame = cap.get()
+        if not ret:
+            break
+        frame: np.ndarray = cv2.flip(frame, 1)
+        sud = Sudoku(frame, svmModel=model_svm)
+        to_show = cv2.warpPerspective(sud.sol_grid, sud.digits.cells.prep.original_M,
+                                      (sud.digits.cells.prep.image.shape[1],
+                                       sud.digits.cells.prep.image.shape[0]),
+                                      dst=sud.digits.cells.prep.image, borderMode=cv2.BORDER_TRANSPARENT,
+                                      flags=cv2.WARP_INVERSE_MAP)
+        cv2.imshow('solved', to_show)
+        key = cv2.waitKey(20)
+        if key == 27:  # exit on ESC
+            break
+
+    cap.release()
+    cv2.destroyAllWindows()
 
 
 image = cv2.imread('data/sudoku.jpg')
