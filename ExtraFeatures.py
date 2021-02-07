@@ -3,6 +3,10 @@ import cv2
 import os
 from matplotlib import pyplot as plt
 from ML_Models import DigitsSVM as DSVM
+from SudokuSolver import Sudoku
+import warnings
+
+warnings.filterwarnings("ignore")
 
 
 def createVideo(sudoku: np.ndarray):
@@ -69,21 +73,71 @@ def createVideo(sudoku: np.ndarray):
 def liveSolving():
     model_svm = DSVM()
     cap = cv2.VideoCapture(0)
+    calibrator = None
+
+    def findAllAreas(feed: np.ndarray):
+        def PreProcess():
+            imag = cv2.cvtColor(feed, cv2.COLOR_BGR2GRAY)
+
+            imag = cv2.GaussianBlur(imag, (5, 5), 0)
+            # imag = cv2.fastNlMeansDenoising(imag, None)
+            imag = cv2.adaptiveThreshold(imag, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
+
+            imag = cv2.bitwise_not(imag, imag)
+
+            kernel = np.ones((2, 2), np.uint8)
+
+            imag = cv2.dilate(imag, kernel, iterations=1)
+
+            return imag
+
+        gray = PreProcess()
+        contours, h = cv2.findContours(gray, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contours = sorted(contours, key=cv2.contourArea, reverse=True)[:1]
+
+        x, y, w, h = cv2.boundingRect(contours[0])
+
+        cv2.rectangle(feed, (x, y), (x + w, y + h), (35, 135, 200), thickness=3)
+
+        return feed
+
     while True:
-        ret, frame = cap.get()
+        ret, frame = cap.read()
         if not ret:
             break
-        frame: np.ndarray = cv2.flip(frame, 1)
-        sud = Sudoku(frame, svmModel=model_svm)
-        to_show = cv2.warpPerspective(sud.sol_grid, sud.digits.cells.prep.original_M,
-                                      (sud.digits.cells.prep.image.shape[1],
-                                       sud.digits.cells.prep.image.shape[0]),
-                                      dst=sud.digits.cells.prep.image, borderMode=cv2.BORDER_TRANSPARENT,
-                                      flags=cv2.WARP_INVERSE_MAP)
-        cv2.imshow('solved', to_show)
-        key = cv2.waitKey(20)
-        if key == 27:  # exit on ESC
-            break
+
+        new_frame = findAllAreas(frame.copy())
+        success = False
+        try:
+            sud = Sudoku(frame, svmModel=model_svm)
+            new_frame = cv2.warpPerspective(sud.sol_grid, sud.digits.cells.prep.original_M,
+                                            (sud.digits.cells.prep.image.shape[1],
+                                             sud.digits.cells.prep.image.shape[0]),
+                                            dst=sud.digits.cells.prep.image, borderMode=cv2.BORDER_TRANSPARENT,
+                                            flags=cv2.WARP_INVERSE_MAP)
+            success = True
+        except ValueError:
+            pass
+
+        except TypeError:
+            pass
+        if not success:
+            cv2.imshow('Looking for Sudoku grid...', new_frame)
+            key = cv2.waitKey(1)
+
+            if key == 27:  # exit on ESC
+                break
+
+        else:
+            cv2.imshow('Found the solution! press esc to continue', new_frame)
+            key = cv2.waitKey(0)
+
+            if key == 27:  # exit on ESC
+                cv2.destroyAllWindows()
+                continue
 
     cap.release()
     cv2.destroyAllWindows()
+
+
+liveSolving()
