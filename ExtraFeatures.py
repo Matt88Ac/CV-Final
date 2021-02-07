@@ -5,6 +5,7 @@ from matplotlib import pyplot as plt
 from ML_Models import DigitsSVM as DSVM
 from SudokuSolver import Sudoku
 import warnings
+from Calibration.Calibration import ChessCalibrator
 
 warnings.filterwarnings("ignore")
 
@@ -73,9 +74,11 @@ def createVideo(sudoku: np.ndarray):
 def liveSolving():
     model_svm = DSVM()
     cap = cv2.VideoCapture(0)
-    calibrator = None
+    calibrator = ChessCalibrator()
 
     def findAllAreas(feed: np.ndarray):
+        feed = calibrator.undisort(image=feed)
+
         def PreProcess():
             imag = cv2.cvtColor(feed, cv2.COLOR_BGR2GRAY)
 
