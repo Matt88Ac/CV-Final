@@ -139,8 +139,6 @@ class Cells:
             cnts = cnts[filt]
             hierarchy = hierarchy[filt]
 
-            wh = ww * hh
-
             def exemineContours(cont):
                 for i, c in enumerate(cont):
                     x, y, w, h = cv2.boundingRect(c)
@@ -273,7 +271,7 @@ class Digits:
     def __init__(self, sudoku: np.ndarray, model: DSVM = None):
         self.cells = Cells(sudoku)
         # self.cells.plot()
-        self.digits = np.array([self.__extract_digit(i) for i in range(len(self.cells.raw))])
+        self.digits = np.array([self.__extractDigit(i) for i in range(len(self.cells.raw))])
 
         self.images = self.digits[:, 1]
         self.digits = self.digits[:, 0]
@@ -309,7 +307,7 @@ class Digits:
             i = i + int(j == 9)
             j = j % 9
 
-    def __extract_digit(self, which, kernel_size: tuple = (5, 5)):
+    def __extractDigit(self, which, kernel_size: tuple = (5, 5)):
         im = self.cells.raw[which]  # self.cells[which].copy().astype(np.uint8)
         r_w = 50
         r_h = 50
@@ -339,14 +337,12 @@ class Digits:
         contours, _ = cv2.findContours(im, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
         if len(contours) != 0:
-            # find the biggest area
             c = max(contours, key=cv2.contourArea)
             x, y, w, h = cv2.boundingRect(c)
 
             original_area = original[y:y + h, x:x + w]
             n_h, n_w = original_area.shape
 
-            # validate contours is number and not noise
             if n_h > (o_h / 5) and n_w > (o_w / 5):
                 res = np.zeros((r_h, r_h))
                 dh = r_h - h
