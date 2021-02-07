@@ -165,13 +165,11 @@ class Cells:
             # exemineContours(cnts)
             xx = []
             yy = []
-            areas = []
             tempo = self.cells.copy()
             i = 0
             img_temp = self.prep.original_area.copy()
             for j, c in enumerate(cnts):
                 x, y, w, h = cv2.boundingRect(c)
-                arr = w * h
                 if w < 5 or h < 5:
                     continue
                 cond = 1 / 1.4 <= w / h <= 1.4
@@ -284,7 +282,6 @@ class Digits:
         else:
             self.svm = model
         pred_cells = [self.svm.predict(c) for c in self.cells]
-        # print(np.array(pred_cells).reshape(9, 9))
 
         for i in range(len(pred_cells)):
             if self.images[i].sum() < self.cells[i].sum() and pred_cells[i] != 1 and self.digits[i] is None:
@@ -311,8 +308,6 @@ class Digits:
             j += 1
             i = i + int(j == 9)
             j = j % 9
-
-        print(self.matrix)
 
     def __extract_digit(self, which, kernel_size: tuple = (5, 5)):
         im = self.cells.raw[which]  # self.cells[which].copy().astype(np.uint8)
