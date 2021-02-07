@@ -236,15 +236,17 @@ class Cells:
 
 class Digits:
 
-    def __init__(self, sudoku: np.ndarray):
+    def __init__(self, sudoku: np.ndarray, model: DSVM = None):
         self.cells = Cells(sudoku)
         self.digits = np.array([self.__extract_digit(i) for i in range(len(self.cells.raw))])
         # self.cells.plot()
 
         self.images = self.digits[:, 1]
         self.digits = self.digits[:, 0]
-
-        self.svm = DSVM()
+        if model is None:
+            self.svm = DSVM()
+        else:
+            self.svm = model
         pred_cells = [self.svm.predict(c) for c in self.cells]
         # print(np.array(pred_cells).reshape(9, 9))
 
@@ -339,8 +341,8 @@ class Digits:
 
 class Sudoku:
 
-    def __init__(self, grid: np.ndarray):
-        self.digits = Digits(grid)
+    def __init__(self, grid: np.ndarray, svmModel: DSVM = None):
+        self.digits = Digits(grid, model=svmModel)
         self.solution = self.__solve()
         self.sol_grid = self.__drawSolution()
         self.sol_grid = self.sol_grid[:, 0]
@@ -515,6 +517,10 @@ def createVideo(sudoku: np.ndarray):
         os.remove('Maps/f{}.jpg'.format(i))
 
     out.release()
+
+
+def liveSolving():
+    pass
 
 
 image = cv2.imread('data/sudoku.jpg')
