@@ -112,38 +112,57 @@ class Cells:
                 enhanced = enhanceGrid2(img)
             elif enhance == 1:
                 enhanced = enhanceGrid1(img)
-            # plt.imshow(enhanced)
+
+            # plt.imshow(enhanced, cmap='gray')
             # plt.show()
+
             cnts = cv2.findContours(enhanced, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            # cnts = cnts[0] if len(cnts) == 2 else cnts[1]
+
             if len(cnts) == 2:
                 cnts, hierarchy = cnts
+                hierarchy = hierarchy[0]
             elif len(cnts) == 3:
                 _, cnts, hierarchy = cnts
+                hierarchy = hierarchy[0]
             else:
                 hierarchy = None
+            cnts = np.array(cnts)
             ww = np.array([cv2.boundingRect(c)[2] for c in cnts])
             hh = np.array([cv2.boundingRect(c)[3] for c in cnts])
 
+            filt = ww == 0
+            filt += hh == 0
+            filt = ~filt
+
+            ww = ww[filt]
+            hh = hh[filt]
+            cnts = cnts[filt]
+            hierarchy = hierarchy[filt]
+
+            wh = ww * hh
+
             def exemineContours(cont):
-                for c in cont:
+                for i, c in enumerate(cont):
                     x, y, w, h = cv2.boundingRect(c)
-                    if w < 5 or h < 5:
-                        continue
                     cond = 1 / 1.4 <= w / h <= 1.4
-                    # if not cond:
-                    #     continue
+                    if not cond:
+                        continue
 
                     cond = ww.mean() - ww.std() <= w <= ww.mean() + ww.std()
                     cond += hh.mean() - hh.std() <= h <= hh.mean() + hh.std()
-                    # cond = True
+                    # cond *= wh.mean() - wh.std() <= w*h <= wh.mean() + wh.std()
                     if not cond:
                         continue
+
+                    if type(hierarchy) == np.ndarray:
+                        if hierarchy[i][3] != -1:
+                            continue
 
                     cv2.rectangle(img_temp, (x, y), (x + w, y + h), color=(200, 40, 150), thickness=3)
                 plt.imshow(img_temp)
                 plt.show()
 
+            # exemineContours(cnts)
             xx = []
             yy = []
             areas = []
@@ -155,7 +174,7 @@ class Cells:
                 arr = w * h
                 if w < 5 or h < 5:
                     continue
-                cond = 1 / 1.5 <= w / h <= 1.5
+                cond = 1 / 1.4 <= w / h <= 1.4
                 if not cond:
                     continue
 
@@ -165,21 +184,21 @@ class Cells:
                     continue
 
                 if type(hierarchy) == np.ndarray:
-                    if hierarchy[0][i][3] != -1:
+                    if hierarchy[i][3] != -1:
                         continue
-
                 temp = self.prep.gray_area[y:y + h, x:x + w]
                 temp = cv2.resize(temp, dsize=(50, 50), interpolation=cv2.INTER_CUBIC)
                 cv2.rectangle(img_temp, (x, y), (x + w, y + h), color=(200, 40, 150), thickness=3)
-                # if j % 5 == 0 and enhance == 1:
-                #     plt.imshow(img_temp)
-                #     # plt.pause(0.01)
-                #     plt.show()
+                # if j % 5 == 0:
+                #    plt.imshow(img_temp)
+                # plt.pause(0.01)
+                # plt.show()
                 tempo[i] = temp.copy()
                 xx.append(y)
                 yy.append(x)
                 # areas.append(arr)
                 i += 1
+            # plt.imshow(img_temp)
             # plt.show()
 
             # taking care of positions, as they are in the original image
@@ -255,8 +274,8 @@ class Digits:
 
     def __init__(self, sudoku: np.ndarray, model: DSVM = None):
         self.cells = Cells(sudoku)
-        self.digits = np.array([self.__extract_digit(i) for i in range(len(self.cells.raw))])
         # self.cells.plot()
+        self.digits = np.array([self.__extract_digit(i) for i in range(len(self.cells.raw))])
 
         self.images = self.digits[:, 1]
         self.digits = self.digits[:, 0]
@@ -293,7 +312,7 @@ class Digits:
             i = i + int(j == 9)
             j = j % 9
 
-        # self.matrix: np.ndarray = np.array([self.svm.predict(d) for d in self.digits]).reshape(9, 9)
+        print(self.matrix)
 
     def __extract_digit(self, which, kernel_size: tuple = (5, 5)):
         im = self.cells.raw[which]  # self.cells[which].copy().astype(np.uint8)
@@ -319,6 +338,9 @@ class Digits:
         im = cv2.morphologyEx(im, cv2.MORPH_OPEN, kernel)
         im = cv2.morphologyEx(im, cv2.MORPH_CLOSE, kernel)
 
+        # plt.imshow(im, cmap='gray')
+        # plt.show()
+
         contours, _ = cv2.findContours(im, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
         if len(contours) != 0:
@@ -334,8 +356,10 @@ class Digits:
                 res = np.zeros((r_h, r_h))
                 dh = r_h - h
                 dw = r_w - w
-
-                res[int(dh / 2):-int(dh / 2) - dh % 2, int(dw / 2):-int(dw / 2) - dw % 2] = original_area
+                try:
+                    res[int(dh / 2):-int(dh / 2) - dh % 2, int(dw / 2):-int(dw / 2) - dw % 2] = original_area
+                except ValueError:
+                    return None, im
 
                 cv2.rectangle(im, (x, y), (x + w, y + h), (255, 255, 255), 2)
 
@@ -557,22 +581,3 @@ def liveSolving():
 
     cap.release()
     cv2.destroyAllWindows()
-
-
-# image = cv2.imread('data/sudoku.jpg')
-
-# image = cv2.imread('data/photo_2020-12-04_17-38-53.jpg')
-
-# image = cv2.imread('data/photo_2021-01-18_22-14-37.jpg')
-
-#image = cv2.imread('data/Facebook_data.png')
-
-# image = cv2.imread('data/sudoku_new.jpg')
-
-# image = cv2.imread('data/opencv_sudoku_puzzle_sudoku_puzzle-768x817.jpg')
-
-image = cv2.imread('data/sudoku_dig.png')
-
-sud = Sudoku(image)
-# createVideo(image)
-sud.plot()
