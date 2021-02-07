@@ -3,7 +3,6 @@ import cv2
 from matplotlib import pyplot as plt
 from preProcessing import preProcessor
 from ML_Models import DigitsSVM as DSVM
-import os
 import warnings
 
 warnings.filterwarnings("ignore")
