@@ -13,15 +13,32 @@ class Cells:
 
     def __init__(self, sudoku: np.ndarray):
         self.prep = preProcessor(sudoku)
+        # self.prep.plot()
 
         color = (50, 120, 200)
 
-        self.raw = np.array([np.array_split(row, 9, axis=1)
-                             for row in np.array_split(self.prep.gray_area, 9)]).reshape(81, 1)
+        self.raw = np.array_split(self.prep.gray_area, 9)
+        self.raw = [np.array_split(row, 9, axis=1) for row in self.raw]
+        shapes = np.array([l.shape[1] for r in self.raw for l in r])
+        mn = np.min(shapes)
+        for i in range(len(self.raw)):
+            for j in range(len(self.raw[i])):
+                self.raw[i][j] = self.raw[i][j][:, :mn]
+
+        self.raw = np.array(self.raw)
+        self.raw = self.raw.reshape((81,) + self.raw.shape[2:])
 
         self.cells = np.zeros((81, 50, 50))
-        self.original = np.array([np.array_split(row, 9, axis=1)
-                                  for row in np.array_split(self.prep.original_area, 9)]).reshape(81, 1)
+        self.original = np.array_split(self.prep.original_area, 9)
+        self.original = [np.array_split(row, 9, axis=1) for row in self.original]
+        shapes = np.array([l.shape[1] for r in self.original for l in r])
+        mn = np.min(shapes)
+        for i in range(len(self.original)):
+            for j in range(len(self.original[i])):
+                self.original[i][j] = self.original[i][j][:, :mn]
+        self.original = np.array(self.original)
+        self.original = self.original.reshape((81, 1) + self.original.shape[2:])
+
         flag = True
 
         def CompleteClassifier(self, img: np.ndarray, enhance=2) -> np.ndarray:
@@ -189,7 +206,7 @@ class Cells:
                 self.cells = CompleteClassifier(self, self.prep.gray_area, 1)
                 print('Other method succeeded.')
             else:
-                self.cells = self.raw.copy()[:, 0]
+                self.cells = self.raw.copy()
                 print('Other method failed.')
 
     def __getitem__(self, item) -> np.ndarray:
@@ -279,7 +296,7 @@ class Digits:
         # self.matrix: np.ndarray = np.array([self.svm.predict(d) for d in self.digits]).reshape(9, 9)
 
     def __extract_digit(self, which, kernel_size: tuple = (5, 5)):
-        im = self.cells.raw[which][0]  # self.cells[which].copy().astype(np.uint8)
+        im = self.cells.raw[which]  # self.cells[which].copy().astype(np.uint8)
         r_w = 50
         r_h = 50
 
@@ -542,13 +559,20 @@ def liveSolving():
     cv2.destroyAllWindows()
 
 
-image = cv2.imread('data/sudoku.jpg')
+# image = cv2.imread('data/sudoku.jpg')
 
 # image = cv2.imread('data/photo_2020-12-04_17-38-53.jpg')
 
 # image = cv2.imread('data/photo_2021-01-18_22-14-37.jpg')
 
+#image = cv2.imread('data/Facebook_data.png')
+
 # image = cv2.imread('data/sudoku_new.jpg')
+
+# image = cv2.imread('data/opencv_sudoku_puzzle_sudoku_puzzle-768x817.jpg')
+
+image = cv2.imread('data/sudoku_dig.png')
+
 sud = Sudoku(image)
 # createVideo(image)
 sud.plot()

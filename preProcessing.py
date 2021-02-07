@@ -42,6 +42,8 @@ class preProcessor:
 
     @staticmethod
     def __four_point_transform(image: np.ndarray, pts: np.ndarray):
+        # Function has been taken from: https://www.pyimagesearch.com/2014/08/25/4-point-opencv-getperspective
+        # -transform-example/
         imag = image.copy()
 
         def order_points(points: np.ndarray):
