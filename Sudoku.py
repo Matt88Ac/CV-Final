@@ -239,19 +239,42 @@ class Digits:
     def __init__(self, sudoku: np.ndarray):
         self.cells = Cells(sudoku)
         self.digits = np.array([self.__extract_digit(i) for i in range(len(self.cells.raw))])
+        # self.cells.plot()
 
         self.images = self.digits[:, 1]
         self.digits = self.digits[:, 0]
 
         self.svm = DSVM()
         pred_cells = [self.svm.predict(c) for c in self.cells]
+        # print(np.array(pred_cells).reshape(9, 9))
 
         for i in range(len(pred_cells)):
             if self.images[i].sum() < self.cells[i].sum() and pred_cells[i] != 1 and self.digits[i] is None:
                 self.digits[i] = self.cells[i].copy()
                 self.images[i] = self.cells[i].copy()
 
-        self.matrix: np.ndarray = np.array([self.svm.predict(d) for d in self.digits]).reshape(9, 9)
+        pred_cells = np.array(pred_cells).reshape(9, 9)
+        self.matrix = np.zeros((9, 9))
+        i = 0
+        j = 0
+        for d in self.digits:
+            pred = self.svm.predict(d)
+            if pred == 0:
+                j += 1
+                i = i + int(j == 9)
+                j = j % 9
+                continue
+            if pred in self.matrix[i, :]:
+                self.matrix[i, j] = pred_cells[i, j]
+            elif pred in self.matrix[:, j]:
+                self.matrix[i, j] = pred_cells[i, j]
+            else:
+                self.matrix[i, j] = pred
+            j += 1
+            i = i + int(j == 9)
+            j = j % 9
+
+        # self.matrix: np.ndarray = np.array([self.svm.predict(d) for d in self.digits]).reshape(9, 9)
 
     def __extract_digit(self, which, kernel_size: tuple = (5, 5)):
         im = self.cells.raw[which][0]  # self.cells[which].copy().astype(np.uint8)
@@ -495,14 +518,12 @@ def createVideo(sudoku: np.ndarray):
 
 
 image = cv2.imread('data/sudoku.jpg')
-# createVideo(image)
-sud = Sudoku(image)
-sud.plot()
-#
+
 # image = cv2.imread('data/photo_2020-12-04_17-38-53.jpg')
-# sud = Sudoku(image)
-# sud.plot()
-#
+
 # image = cv2.imread('data/photo_2021-01-18_22-14-37.jpg')
-# sud = Sudoku(image)
-# sud.plot()
+
+# image = cv2.imread('data/sudoku_new.jpg')
+sud = Sudoku(image)
+# createVideo(image)
+sud.plot()
