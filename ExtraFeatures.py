@@ -141,6 +141,4 @@ def liveSolving():
 
     cap.release()
     cv2.destroyAllWindows()
-
-
-liveSolving()
+    
