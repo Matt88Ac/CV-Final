@@ -142,9 +142,8 @@ class Cells:
                 if not cond:
                     continue
 
-                cond = ww.mean() - ww.std() - 5 <= w <= ww.mean() + ww.std() + 10
-                cond += hh.mean() - hh.std() - 5 <= h <= hh.mean() + hh.std() + 10
-                # cond = True
+                cond = ww.mean() - ww.std() <= w <= ww.mean() + ww.std()
+                cond += hh.mean() - hh.std() <= h <= hh.mean() + hh.std()
                 if not cond:
                     continue
 
@@ -495,10 +494,10 @@ def createVideo(sudoku: np.ndarray):
     out.release()
 
 
-# image = cv2.imread('data/sudoku.jpg')
-# # createVideo(image)
-# sud = Sudoku(image)
-# sud.plot()
+image = cv2.imread('data/sudoku.jpg')
+# createVideo(image)
+sud = Sudoku(image)
+sud.plot()
 #
 # image = cv2.imread('data/photo_2020-12-04_17-38-53.jpg')
 # sud = Sudoku(image)
