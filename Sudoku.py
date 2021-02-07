@@ -4,6 +4,9 @@ from matplotlib import pyplot as plt
 from preProcessing import preProcessor
 from ML_Models import DigitsSVM as DSVM
 import os
+import warnings
+
+warnings.filterwarnings("ignore")
 
 
 class Cells:
@@ -19,52 +22,149 @@ class Cells:
         self.cells = np.zeros((81, 50, 50))
         self.original = np.array([np.array_split(row, 9, axis=1)
                                   for row in np.array_split(self.prep.original_area, 9)]).reshape(81, 1)
+        flag = True
 
-        def CompleteClassifier(self, img: np.ndarray) -> np.ndarray:
+        def CompleteClassifier(self, img: np.ndarray, enhance=2) -> np.ndarray:
 
-            def plotLines(imag: np.ndarray, edges: np.ndarray):
-                for x1, y1, x2, y2 in edges[:, 0, :]:
-                    cv2.line(imag, (x1, y1), (x2, y2), color, 2)
-                return imag
+            def enhanceGrid1(sudGrid: np.ndarray):
+                def plotLines(imag: np.ndarray, edgesX: np.ndarray):
+                    for x1, y1, x2, y2 in edgesX[:, 0, :]:
+                        cv2.line(imag, (x1, y1), (x2, y2), color, 2)
+                    return imag
 
-            edges = cv2.Canny(img, 30,  90, 3)
-            lines = cv2.HoughLinesP(img, 1, np.pi / 40, 180, maxLineGap=250, minLineLength=60, lines=edges)
-            close = plotLines(cv2.cvtColor(img, cv2.COLOR_GRAY2BGR), lines)
-            self.lines1 = close.copy()
-            # plt.imshow(close)
+                edges = cv2.Canny(sudGrid, 30, 90, 3)
+                lines = cv2.HoughLinesP(sudGrid, 1, np.pi / 40, 180, maxLineGap=250, minLineLength=60, lines=edges)
+                close = plotLines(cv2.cvtColor(sudGrid, cv2.COLOR_GRAY2BGR), lines)
+                self.lines1 = close.copy()
+                # plt.imshow(close)
+                # plt.show()
+
+                gray = cv2.cvtColor(close, cv2.COLOR_BGR2GRAY)
+                blur = cv2.medianBlur(gray, 3)
+                sharpen_kernel = np.array([[-1, -1, -1], [-1, 9, -1], [-1, -1, -1]])
+                sharpen = cv2.filter2D(blur, -1, sharpen_kernel)
+                self.lines2 = sharpen.copy()
+
+                thresh = cv2.threshold(sharpen, 100, 250, cv2.THRESH_BINARY_INV)[1]
+                kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+                close = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel, iterations=1)
+                close = cv2.morphologyEx(close, cv2.MORPH_CLOSE, kernel, iterations=1)
+                self.lines3 = close.copy()
+
+                return close
+
+            def enhanceGrid2(sudGrid: np.ndarray):
+                def plotLines(imag: np.ndarray, edgesX: np.ndarray):
+                    for line in edgesX:
+                        rho = line[0][0]
+                        theta = line[0][1]
+                        a = np.cos(theta)
+                        b = np.sin(theta)
+                        x0 = a * rho
+                        y0 = b * rho
+                        x1 = int(x0 + 1000 * (-b))
+                        y1 = int(y0 + 1000 * a)
+                        x2 = int(x0 - 1000 * (-b))
+                        y2 = int(y0 - 1000 * a)
+                        cv2.line(imag, (x1, y1), (x2, y2), color, 3)
+                    return imag
+
+                edges = cv2.Canny(cv2.blur(sudGrid, (3, 3)), 30, 90, 3)
+                lines = cv2.HoughLines(edges, 2, np.pi / 180, 280)
+                close = plotLines(cv2.cvtColor(sudGrid, cv2.COLOR_GRAY2BGR), lines)
+                self.lines1 = close.copy()
+                # plt.imshow(close)
+                # plt.show()
+
+                gray = cv2.cvtColor(close, cv2.COLOR_BGR2GRAY)
+                blur = cv2.medianBlur(gray, 3)
+                sharpen_kernel = np.array([[-1, -1, -1], [-1, 9, -1], [-1, -1, -1]])
+                sharpen = cv2.filter2D(blur, -1, sharpen_kernel)
+                self.lines2 = sharpen.copy()
+
+                thresh = cv2.threshold(sharpen, 100, 250, cv2.THRESH_BINARY_INV)[1]
+                kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+                close = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel, iterations=1)
+                close = cv2.morphologyEx(close, cv2.MORPH_CLOSE, kernel, iterations=1)
+                self.lines3 = close.copy()
+
+                return close
+
+            img_temp = self.prep.original_area.copy()
+            if enhance == 2:
+                enhanced = enhanceGrid2(img)
+            elif enhance == 1:
+                enhanced = enhanceGrid1(img)
+            # plt.imshow(enhanced)
             # plt.show()
-
-            gray = cv2.cvtColor(close, cv2.COLOR_BGR2GRAY)
-            blur = cv2.medianBlur(gray, 3)
-            sharpen_kernel = np.array([[-1, -1, -1], [-1, 9, -1], [-1, -1, -1]])
-            sharpen = cv2.filter2D(blur, -1, sharpen_kernel)
-            self.lines2 = sharpen.copy()
-
-            thresh = cv2.threshold(sharpen, 100, 250, cv2.THRESH_BINARY_INV)[1]
-            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-            close = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel, iterations=1)
-            close = cv2.morphologyEx(close, cv2.MORPH_CLOSE, kernel, iterations=1)
-            self.lines3 = close.copy()
-
-            cnts = cv2.findContours(close, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            cnts = cnts[0] if len(cnts) == 2 else cnts[1]
-
+            cnts = cv2.findContours(enhanced, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            # cnts = cnts[0] if len(cnts) == 2 else cnts[1]
+            if len(cnts) == 2:
+                cnts, hierarchy = cnts
+            elif len(cnts) == 3:
+                _, cnts, hierarchy = cnts
+            else:
+                hierarchy = None
             ww = np.array([cv2.boundingRect(c)[2] for c in cnts])
+            hh = np.array([cv2.boundingRect(c)[3] for c in cnts])
+
+            def exemineContours(cont):
+                for c in cont:
+                    x, y, w, h = cv2.boundingRect(c)
+                    if w < 5 or h < 5:
+                        continue
+                    cond = 1 / 1.4 <= w / h <= 1.4
+                    # if not cond:
+                    #     continue
+
+                    cond = ww.mean() - ww.std() <= w <= ww.mean() + ww.std()
+                    cond += hh.mean() - hh.std() <= h <= hh.mean() + hh.std()
+                    # cond = True
+                    if not cond:
+                        continue
+
+                    cv2.rectangle(img_temp, (x, y), (x + w, y + h), color=(200, 40, 150), thickness=3)
+                plt.imshow(img_temp)
+                plt.show()
+
             xx = []
             yy = []
-
+            areas = []
             tempo = self.cells.copy()
-
             i = 0
-            for c in cnts:
+            img_temp = self.prep.original_area.copy()
+            for j, c in enumerate(cnts):
                 x, y, w, h = cv2.boundingRect(c)
-                if np.quantile(ww, 0.099) <= w <= np.quantile(ww, 0.911):
-                    temp = self.prep.gray_area[y:y + h, x:x + w]
-                    temp = cv2.resize(temp, dsize=(50, 50), interpolation=cv2.INTER_CUBIC)
-                    tempo[i] = temp.copy()
-                    xx.append(y)
-                    yy.append(x)
-                    i += 1
+                arr = w * h
+                if w < 5 or h < 5:
+                    continue
+                cond = 1 / 1.5 <= w / h <= 1.5
+                if not cond:
+                    continue
+
+                cond = ww.mean() - ww.std() - 5 <= w <= ww.mean() + ww.std() + 10
+                cond += hh.mean() - hh.std() - 5 <= h <= hh.mean() + hh.std() + 10
+                # cond = True
+                if not cond:
+                    continue
+
+                if type(hierarchy) == np.ndarray:
+                    if hierarchy[0][i][3] != -1:
+                        continue
+
+                temp = self.prep.gray_area[y:y + h, x:x + w]
+                temp = cv2.resize(temp, dsize=(50, 50), interpolation=cv2.INTER_CUBIC)
+                cv2.rectangle(img_temp, (x, y), (x + w, y + h), color=(200, 40, 150), thickness=3)
+                # if j % 5 == 0 and enhance == 1:
+                #     plt.imshow(img_temp)
+                #     # plt.pause(0.01)
+                #     plt.show()
+                tempo[i] = temp.copy()
+                xx.append(y)
+                yy.append(x)
+                # areas.append(arr)
+                i += 1
+            # plt.show()
 
             # taking care of positions, as they are in the original image
             tempo = tempo[np.argsort(xx)]
@@ -81,9 +181,17 @@ class Cells:
 
         try:
             self.cells = CompleteClassifier(self, self.prep.gray_area)
+            print('Cells detected.')
 
         except ValueError:
-            self.cells = np.zeros((81, 50, 50))
+            print('Error in cells detector, trying another method...')
+            if flag:
+                flag = False
+                self.cells = CompleteClassifier(self, self.prep.gray_area, 1)
+                print('Other method succeeded.')
+            else:
+                self.cells = self.raw.copy()[:, 0]
+                print('Other method failed.')
 
     def __getitem__(self, item) -> np.ndarray:
         return self.cells[item]
@@ -388,5 +496,14 @@ def createVideo(sudoku: np.ndarray):
 
 
 # image = cv2.imread('data/sudoku.jpg')
-#createVideo(image)
+# # createVideo(image)
 # sud = Sudoku(image)
+# sud.plot()
+#
+# image = cv2.imread('data/photo_2020-12-04_17-38-53.jpg')
+# sud = Sudoku(image)
+# sud.plot()
+#
+# image = cv2.imread('data/photo_2021-01-18_22-14-37.jpg')
+# sud = Sudoku(image)
+# sud.plot()
