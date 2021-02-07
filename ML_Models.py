@@ -15,7 +15,7 @@ class DigitsSVM:
         self.svm.setType(cv2.ml.SVM_C_SVC)
         self.svm.setKernel(cv2.ml.SVM_LINEAR)
 
-        self.digits_dataset = cv2.imread('digitst.jpg', 0)
+        self.digits_dataset = cv2.imread('Dataset/set.jpg', 0)
         self.digits_dataset: np.ndarray = np.array([np.hsplit(row, 9) for
                                                     row in np.vsplit(self.digits_dataset, 40)]).reshape(-1, 2500)
 
