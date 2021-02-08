@@ -1,5 +1,5 @@
 from sklearn.metrics import confusion_matrix
-from sklearn.metrics import accuracy_score, plot_confusion_matrix
+from sklearn.metrics import accuracy_score
 from sklearn.ensemble import RandomForestClassifier
 import numpy as np
 import cv2
@@ -112,10 +112,6 @@ class RandomForestDigits:
             train_y = np.array(train_y)
 
             self.model.fit(train_x, train_y)
-            if plot_confusion_mat:
-                plt.title('Score: {}'.format(accuracy_score(self.model.predict(test_x), test_y)))
-                plot_confusion_matrix(self.model, test_x, test_y, ax=plt.gca())
-                plt.show()
         joblib.dump(self.model, 'RFModel.pkl')
 
     def predict(self, digit: np.ndarray):
