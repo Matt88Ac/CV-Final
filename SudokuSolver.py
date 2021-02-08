@@ -429,7 +429,6 @@ class Sudoku:
             return np.zeros_like(self.digits.cells.original)
 
         to_draw: np.ndarray = self.digits.cells.original.copy()
-        mat = self.digits.matrix.flatten()
         sol = self.solution.flatten()
 
         def drawDigit(cell: np.ndarray, digit: int, color: tuple):
@@ -487,3 +486,47 @@ class Sudoku:
 
         plt.show()
         return ax[1]
+
+    @staticmethod
+    def drawSolution(solution: np.ndarray, original_grid: np.ndarray, digit_cells: np.ndarray) -> np.ndarray:
+        if type(solution) != np.ndarray:
+            return np.zeros_like(original_grid)
+
+        to_draw: np.ndarray = original_grid.copy()
+        sol = solution.flatten()
+
+        def drawDigit(cell: np.ndarray, digit: int, color: tuple):
+            h, w, _ = cell.shape
+
+            size = w / h
+            offsetTop = int(h * 0.75 * size)
+            offsetLeft = int(w * 0.25 * size)
+
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            return cv2.putText(cell.copy(), str(int(digit)), (offsetLeft, offsetTop), font, size, color, 2, cv2.LINE_AA)
+
+        for i in range(81):
+            if digit_cells.flatten()[i] == 0:
+                to_draw[i][0] = drawDigit(to_draw[i][0], sol[i], (170, 50, 150))
+
+        return to_draw
+
+    @staticmethod
+    def cells_to_grid(solution: np.ndarray, original_grid: np.ndarray):
+        img = np.zeros_like(original_grid)
+
+        h = 0
+        w = 0
+        cell = solution[0]
+        for i in range(9):
+            for j in range(9):
+                index = i * 9 + j
+                cell = solution[index]
+
+                img[h: h + cell.shape[0], w: w + cell.shape[1]] = cell
+                w += cell.shape[1]
+
+            w = 0
+            h += cell.shape[0]
+
+        return img
