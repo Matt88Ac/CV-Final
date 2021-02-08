@@ -49,6 +49,8 @@ class DigitsSVM:
         self.score = accuracy_score(nbins[1], Y_test)
         self.con_mat = confusion_matrix(nbins[1], Y_test)
 
+        self.svm.save('SVModel.dat')
+
     def predict(self, digit_image: np.ndarray) -> int:
         if type(digit_image) != np.ndarray:
             return 0
@@ -59,75 +61,6 @@ class DigitsSVM:
             return 0
         im = self.hog.compute(im)
         return self.svm.predict(np.array([im]))[1][0][0]
-
-    def __split_and_train(self, dds, labels, split) -> tuple:
-        n = len(dds)
-
-        x_train = dds[: int(n * split)]
-        y_train = labels[: int(n * split)]
-
-        x_test = dds[int(n * split):]
-        y_test = labels[int(n * split):]
-
-        x_train = np.array([self.hog.compute(x0) for x0 in x_train], dtype=np.float32)
-        x_test = np.array([self.hog.compute(x0) for x0 in x_test], dtype=np.float32)
-
-        self.svm.train(x_train, cv2.ml.ROW_SAMPLE, y_train.astype(np.int32))
-
-        return x_test, y_test
-
-
-class sv:
-
-    def __init__(self, split: float = 0.7):
-        s = 50
-        self.s = (s, s)
-        winSize = (40, 40)
-        blockSize = (20, 20)
-        blockStride = (10, 10)
-        cellSize = (5, 5)
-        nbins = 9
-        self.hog = cv2.HOGDescriptor(winSize, blockSize, blockStride, cellSize, nbins)
-        if 'SVModel.dat' in os.listdir():
-            self.svm = cv2.ml.SVM_load('SVModel.dat')
-            print('SVM Model Loaded!')
-            return
-
-        self.svm: cv2.ml_SVM = cv2.ml.SVM_create()
-        self.svm.setType(cv2.ml.SVM_C_SVC)
-        self.svm.setKernel(cv2.ml.SVM_LINEAR)
-        self.svm.setTermCriteria((cv2.TERM_CRITERIA_COUNT, 100, 1e-6))
-
-        print('Training Model...')
-
-        def openDataSet():
-            digits_dataset_n = []
-            labels = []
-
-            for element in ['Train', 'Test']:
-                for i in range(10):
-                    PATH = 'Dataset/' + element + f'/{i}'
-                    images = os.listdir(PATH)
-                    for image in images:
-                        n_Path = PATH + '/' + image
-                        image = cv2.imread(n_Path, 0)
-                        image = cv2.resize(image, self.s, interpolation=cv2.INTER_CUBIC)
-                        digits_dataset_n.append(image)
-                        labels.append(i)
-            labels = np.array(labels)
-            digits_dataset_n = np.array(digits_dataset_n)
-
-            return digits_dataset_n, labels
-
-        dds, lbls = openDataSet()
-        xtest, ytest = self.__split_and_train(dds, lbls, split)
-        print('Done Training!')
-
-        nbins = self.svm.predict(xtest)
-        self.score = accuracy_score(nbins[1], ytest)
-        self.con_mat = confusion_matrix(nbins[1], ytest)
-
-        self.svm.save('SVModel.dat')
 
     def __split_and_train(self, dds, labels, split) -> tuple:
         n = len(dds)
