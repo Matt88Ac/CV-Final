@@ -80,7 +80,7 @@ class DigitsSVM:
 
 
 class RandomForestDigits:
-    def __init__(self, plot_confusion_mat=False):
+    def __init__(self):
         if 'RFModel.pkl' in os.listdir():
             self.model = joblib.load('RFModel.pkl')
 
