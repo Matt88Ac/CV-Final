@@ -20,13 +20,13 @@ class DigitsSVM:
         self.s = (50, 50)
 
         if 'SVModel.dat' in os.listdir():
-            self.svm = cv2.ml.SVM_load('SVModel.dat')
+            self.model = cv2.ml.SVM_load('SVModel.dat')
             print('SVM Model Loaded!')
             return
 
-        self.svm = cv2.ml.SVM_create()
-        self.svm.setType(cv2.ml.SVM_C_SVC)
-        self.svm.setKernel(cv2.ml.SVM_LINEAR)
+        self.model = cv2.ml.SVM_create()
+        self.model.setType(cv2.ml.SVM_C_SVC)
+        self.model.setKernel(cv2.ml.SVM_LINEAR)
 
         print('Training Model...')
 
@@ -45,11 +45,11 @@ class DigitsSVM:
         X_test, Y_test = self.__split_and_train(X_train, Y_train, split)
 
         print('Done training!')
-        nbins = self.svm.predict(X_test)
+        nbins = self.model.predict(X_test)
         self.score = accuracy_score(nbins[1], Y_test)
         self.con_mat = confusion_matrix(nbins[1], Y_test)
 
-        self.svm.save('SVModel.dat')
+        self.model.save('SVModel.dat')
 
     def predict(self, digit_image: np.ndarray) -> int:
         if type(digit_image) != np.ndarray:
@@ -60,7 +60,7 @@ class DigitsSVM:
         if im.sum() < 1000:
             return 0
         im = self.hog.compute(im)
-        return self.svm.predict(np.array([im]))[1][0][0]
+        return self.model.predict(np.array([im]))[1][0][0]
 
     def __split_and_train(self, dds, labels, split) -> tuple:
         n = len(dds)
@@ -74,7 +74,7 @@ class DigitsSVM:
         x_train = np.array([self.hog.compute(x0) for x0 in x_train], dtype=np.float32)
         x_test = np.array([self.hog.compute(x0) for x0 in x_test], dtype=np.float32)
 
-        self.svm.train(x_train, cv2.ml.ROW_SAMPLE, y_train.astype(np.int32))
+        self.model.train(x_train, cv2.ml.ROW_SAMPLE, y_train.astype(np.int32))
 
         return x_test, y_test
 
