@@ -488,7 +488,7 @@ class Sudoku:
         return ax[1]
 
     @staticmethod
-    def drawSolution(solution: np.ndarray, original_grid: np.ndarray, digit_cells: np.ndarray) -> np.ndarray:
+    def drawSolution_Static(solution: np.ndarray, original_grid: np.ndarray, digit_cells: np.ndarray) -> np.ndarray:
         if type(solution) != np.ndarray:
             return np.zeros_like(original_grid)
 
@@ -512,7 +512,7 @@ class Sudoku:
         return to_draw
 
     @staticmethod
-    def cells_to_grid(solution: np.ndarray, original_grid: np.ndarray):
+    def cells_to_grid_static(solution: np.ndarray, original_grid: np.ndarray):
         img = np.zeros_like(original_grid)
 
         h = 0
