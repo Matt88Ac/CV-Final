@@ -110,7 +110,7 @@ class RandomForestDigits:
             test_y = np.array(test_y)
             train_x = np.array(train_x)
             train_y = np.array(train_y)
-
+            self.score = accuracy_score(self.model.predict(test_x), test_y)
             self.model.fit(train_x, train_y)
         joblib.dump(self.model, 'RFModel.pkl')
 
