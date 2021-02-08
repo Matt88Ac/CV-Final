@@ -141,3 +141,11 @@ def liveSolving():
 
     cap.release()
     cv2.destroyAllWindows()
+
+
+# for i in range(30):
+#     image = cv2.imread(f'data/Example{i}.jpg')
+#     if type(image) != np.ndarray:
+#         image = cv2.imread(f'data/Example{i}.png')
+#     sud = Sudoku(image)
+#     sud.plot()
